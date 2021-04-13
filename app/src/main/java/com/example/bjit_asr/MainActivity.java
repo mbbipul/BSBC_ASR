@@ -2,8 +2,10 @@ package com.example.bjit_asr;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -40,10 +42,16 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
     private SpeechRecognizer speechRecognizer;
     private RecognitionProgressView recognitionProgressView;
 
+    AudioManager audioManager;
+
+    int deviceSystemVolume ;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         MeowBottomNavigation bottomNavigation = findViewById(R.id.bottom);
         speechText = findViewById(R.id.speech_text);
@@ -127,12 +135,23 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
         super.onDestroy();
     }
 
+    private int muteDevice(){
+        audioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+        return audioManager.getStreamVolume(AudioManager.STREAM_SYSTEM);
+    }
+
+    private void unMuteDevice(int volume){
+        audioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, volume,
+                AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+    }
+
     private void startRecognition() {
         recognitionProgressView.play();
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en");
+        deviceSystemVolume = muteDevice();
         speechRecognizer.startListening(intent);
     }
 
@@ -141,7 +160,9 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         speechText.setText(matches.get(0));
         recognitionProgressView.stop();
-        recognitionProgressView.play();    }
+        recognitionProgressView.play();
+        startRecognition();
+    }
 
     private void requestPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
