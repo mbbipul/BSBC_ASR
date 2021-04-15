@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.view.MenuItem;
@@ -35,7 +36,7 @@ import java.util.Locale;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
-public class MainActivity extends AppCompatActivity implements Function1<MeowBottomNavigation.Model, Unit> {
+public class MainActivity extends AppCompatActivity implements RecognitionListener,Function1<MeowBottomNavigation.Model, Unit> {
 
     private TextView speechText;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION_CODE = 1;
@@ -45,16 +46,18 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
     AudioManager audioManager;
 
     int deviceSystemVolume ;
-
+    View speechContainer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         MeowBottomNavigation bottomNavigation = findViewById(R.id.bottom);
         speechText = findViewById(R.id.speech_text);
+        speechContainer = findViewById(R.id.speech_container);
 
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_bookmark_border_24, R.drawable.ic_baseline_bookmark_border_24));
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_mic_none_24, R.drawable.ic_baseline_mic_none_24));
@@ -68,10 +71,11 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
                 int id = model.getId();
                 switch (id) {
                     case R.drawable.ic_baseline_bookmark_border_24:
-                        Toast.makeText(MainActivity.this, "bookmark clicked", Toast.LENGTH_SHORT).show();
+                        speechContainer.setVisibility(View.GONE);
+                        speechRecognizer.cancel();
                         break;
                     case R.drawable.ic_baseline_mic_none_24:
-                        Toast.makeText(MainActivity.this, "speak clicked", Toast.LENGTH_SHORT).show();
+                        speechContainer.setVisibility(View.VISIBLE);
                         break;
                 }
                 return null;
@@ -93,12 +97,7 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
 
         recognitionProgressView = (RecognitionProgressView) findViewById(R.id.recognition_view);
         recognitionProgressView.setSpeechRecognizer(speechRecognizer);
-        recognitionProgressView.setRecognitionListener(new RecognitionListenerAdapter() {
-            @Override
-            public void onResults(Bundle results) {
-                showResults(results);
-            }
-        });
+        recognitionProgressView.setRecognitionListener(this);
         recognitionProgressView.setColors(colors);
         recognitionProgressView.play();
 
@@ -132,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
         if (speechRecognizer != null) {
             speechRecognizer.destroy();
         }
+        unMuteDevice(deviceSystemVolume);
         super.onDestroy();
     }
 
@@ -177,23 +177,6 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
 
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        switch (requestCode) {
-            case 345: {
-                if (resultCode == RESULT_OK && null != data) {
-
-                    ArrayList<String> result = data
-                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                    speechText.setText(result.get(0));
-                }
-                break;
-            }
-        }
-    }
-
-    @Override
     public Unit invoke(MeowBottomNavigation.Model model) {
         int id = model.getId();
         switch (id) {
@@ -207,5 +190,64 @@ public class MainActivity extends AppCompatActivity implements Function1<MeowBot
 
         }
         return null;
+    }
+
+    @Override
+    public void onReadyForSpeech(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onBeginningOfSpeech() {
+
+    }
+
+    @Override
+    public void onRmsChanged(float v) {
+
+    }
+
+    @Override
+    public void onBufferReceived(byte[] bytes) {
+
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+        unMuteDevice(deviceSystemVolume);
+    }
+
+    @Override
+    public void onError(int i) {
+        switch (i){
+            case SpeechRecognizer.ERROR_NO_MATCH:
+                showToast("No Match");
+                startRecognition();
+                break;
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                showToast("Time out");
+                startRecognition();
+                break;
+        }
+    }
+
+    @Override
+    public void onResults(Bundle bundle) {
+        showResults(bundle);
+        unMuteDevice(deviceSystemVolume);
+    }
+
+    @Override
+    public void onPartialResults(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onEvent(int i, Bundle bundle) {
+
+    }
+
+    private void showToast(String msg){
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }

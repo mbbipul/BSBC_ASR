@@ -7,39 +7,40 @@
     android:layout_height="match_parent"
     android:paddingTop="?attr/actionBarSize">
 
-    <TextView
-        android:id="@+id/speech_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/bottom"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.106"
-        tools:layout_editor_absoluteX="16dp" />
-
-    <com.github.zagum.speechrecognitionview.RecognitionProgressView
-        android:id="@+id/recognition_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
+    <LinearLayout
+        android:id="@+id/speech_container"
+        android:layout_width="387dp"
+        android:layout_height="579dp"
+        android:orientation="vertical"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:gravity="center|bottom"
         app:layout_constraintBottom_toTopOf="@+id/bottom"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.42" />
+        android:layout_marginBottom="30dp">
 
-    <Button
-        android:id="@+id/listen"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Listen"
-        app:layout_constraintBottom_toTopOf="@+id/bottom"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/recognition_view"
-        app:layout_constraintVertical_bias="0.9" />
+        <TextView
+            android:id="@+id/speech_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
+        <com.github.zagum.speechrecognitionview.RecognitionProgressView
+            android:id="@+id/recognition_view"
+            android:layout_width="wrap_content"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/activity_horizontal_margin"/>
+
+        <Button
+            android:id="@+id/listen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_horizontal_margin"
+            android:layout_gravity="center_horizontal|center"
+            android:text="Listen" />
+
+    </LinearLayout>
     <com.etebarian.meowbottomnavigation.MeowBottomNavigation
         android:id="@+id/bottom"
         android:layout_width="match_parent"
