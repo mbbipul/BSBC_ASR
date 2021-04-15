@@ -17,6 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
+import com.example.bjit_asr.Models.RecognizeText;
+import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -29,8 +31,11 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import kotlin.Unit;
@@ -42,11 +47,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private static final int REQUEST_RECORD_AUDIO_PERMISSION_CODE = 1;
     private SpeechRecognizer speechRecognizer;
     private RecognitionProgressView recognitionProgressView;
+    private AudioManager audioManager;
+    private int deviceSystemVolume ;
+    private View speechContainer;
+    private RecyclerView recognizeTextRecyclerView;
+    ArrayList<RecognizeText> recognizeTexts;
+    RecognizeTextAdapter recognizeTextAdapter;
 
-    AudioManager audioManager;
-
-    int deviceSystemVolume ;
-    View speechContainer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,25 +71,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         bottomNavigation.show(R.drawable.ic_baseline_bookmark_border_24, true);
 
         bottomNavigation.setOnClickMenuListener(this);
-
-        bottomNavigation.setOnShowListener(new Function1<MeowBottomNavigation.Model, Unit>() {
-            @Override
-            public Unit invoke(MeowBottomNavigation.Model model) {
-                int id = model.getId();
-                switch (id) {
-                    case R.drawable.ic_baseline_bookmark_border_24:
-                        speechContainer.setVisibility(View.GONE);
-                        speechRecognizer.cancel();
-                        break;
-                    case R.drawable.ic_baseline_mic_none_24:
-                        speechContainer.setVisibility(View.VISIBLE);
-                        break;
-                }
-                return null;
-            }
-        });
-
-
+        bottomNavigation.setOnShowListener(this);
 
         int[] colors = {
                 ContextCompat.getColor(this, R.color.yellow),
@@ -125,6 +114,19 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     }
 
+    private void updateRecyclerView(String data){
+        recognizeTexts.add(new RecognizeText(data));
+        recognizeTextAdapter.notifyDataSetChanged();
+    }
+
+
+    private void initializeRecognizeTextRecyclerView(){
+        recognizeTextRecyclerView = (RecyclerView) findViewById(R.id.recognize_texts_recyclerview);
+        recognizeTexts = new ArrayList<>() ;
+        recognizeTextAdapter = new RecognizeTextAdapter(recognizeTexts);
+        recognizeTextRecyclerView.setAdapter(recognizeTextAdapter);
+        recognizeTextRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
 
     @Override
     protected void onDestroy() {
@@ -147,10 +149,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private void startRecognition() {
         recognitionProgressView.play();
+
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en");
+
         deviceSystemVolume = muteDevice();
         speechRecognizer.startListening(intent);
     }
@@ -158,9 +162,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private void showResults(Bundle results) {
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        speechText.setText(matches.get(0));
+
+        updateRecyclerView(matches.get(0));
         recognitionProgressView.stop();
-        recognitionProgressView.play();
         startRecognition();
     }
 
@@ -181,13 +185,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         int id = model.getId();
         switch (id) {
             case R.drawable.ic_baseline_bookmark_border_24:
-                Toast.makeText(MainActivity.this, "bookmark clicked", Toast.LENGTH_SHORT).show();
+                speechContainer.setVisibility(View.GONE);
+                speechRecognizer.cancel();
                 break;
             case R.drawable.ic_baseline_mic_none_24:
-//                promptSpeechInput();
-
+                speechContainer.setVisibility(View.VISIBLE);
+                initializeRecognizeTextRecyclerView();
                 break;
-
         }
         return null;
     }

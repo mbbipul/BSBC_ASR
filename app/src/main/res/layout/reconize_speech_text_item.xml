@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="@dimen/activity_horizontal_margin"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/blue"
+    app:strokeWidth="2dp"
+    app:strokeColor="#3C3737"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardElevation="10dp"
+    app:cardMaxElevation="15dp"
+    app:cardCornerRadius="40dp">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp">
+        <TextView
+            android:id="@+id/speech_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:text="Hello folks ! How you are doing Hello folks !Hello folks ! How you are doingHow you are doing Hello folks ! How you are doing"/>
+        <TextView
+            android:id="@+id/speech_rec_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Monday July 2021 : 12.00 pm"
+            android:layout_alignParentRight="true"
+            android:textColor="@color/white"
+            android:textSize="10dp"
+            android:layout_below="@id/speech_text"/>
+    </RelativeLayout>
+</com.google.android.material.card.MaterialCardView>
+
