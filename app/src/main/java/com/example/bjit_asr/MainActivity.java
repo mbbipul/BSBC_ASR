@@ -22,6 +22,7 @@ import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.button.MaterialButton;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -51,20 +52,23 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private int deviceSystemVolume ;
     private View speechContainer;
     private RecyclerView recognizeTextRecyclerView;
-    ArrayList<RecognizeText> recognizeTexts;
-    RecognizeTextAdapter recognizeTextAdapter;
+    private ArrayList<RecognizeText> recognizeTexts;
+    private RecognizeTextAdapter recognizeTextAdapter;
+    private MaterialButton listen;
+    private boolean isRecognizeListening;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
+        isRecognizeListening = false;
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         MeowBottomNavigation bottomNavigation = findViewById(R.id.bottom);
         speechText = findViewById(R.id.speech_text);
         speechContainer = findViewById(R.id.speech_container);
+        listen = findViewById(R.id.listen);
 
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_bookmark_border_24, R.drawable.ic_baseline_bookmark_border_24));
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_mic_none_24, R.drawable.ic_baseline_mic_none_24));
@@ -81,33 +85,19 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 ContextCompat.getColor(this, R.color.red)
         };
 
-
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-
         recognitionProgressView = (RecognitionProgressView) findViewById(R.id.recognition_view);
-        recognitionProgressView.setSpeechRecognizer(speechRecognizer);
-        recognitionProgressView.setRecognitionListener(this);
         recognitionProgressView.setColors(colors);
         recognitionProgressView.play();
-
-        Button listen = (Button) findViewById(R.id.listen);
 
         listen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 if (ContextCompat.checkSelfPermission(MainActivity.this,
                         Manifest.permission.RECORD_AUDIO)
                         != PackageManager.PERMISSION_GRANTED) {
                     requestPermission();
                 } else {
-                    startRecognition();
-                    recognitionProgressView.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            startRecognition();
-                        }
-                    }, 50);
+                    callStartRecognition();
                 }
             }
         });
@@ -117,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private void updateRecyclerView(String data){
         recognizeTexts.add(new RecognizeText(data));
         recognizeTextAdapter.notifyDataSetChanged();
+        recognizeTextRecyclerView.scrollToPosition(recognizeTexts.size()-1);
     }
 
 
@@ -137,6 +128,42 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         super.onDestroy();
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_RECORD_AUDIO_PERMISSION_CODE: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    callStartRecognition();
+                } else {
+                    Toast.makeText(this, "Permissions Denied to record audio", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+        }
+    }
+
+    private void callStartRecognition(){
+        if(isRecognizeListening){
+            speechRecognizer.destroy();
+            listen.setText("Listen");
+            listen.setBackgroundColor(getColor(R.color.blue));
+            isRecognizeListening = false;
+            recognitionProgressView.stop();
+            recognitionProgressView.setVisibility(View.GONE);
+            return;
+        }
+        startRecognition();
+        recognitionProgressView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startRecognition();
+            }
+        }, 50);
+        listen.setText("Stop Listening");
+        listen.setBackgroundColor(getColor(R.color.red));
+    }
     private int muteDevice(){
         audioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
         return audioManager.getStreamVolume(AudioManager.STREAM_SYSTEM);
@@ -148,6 +175,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private void startRecognition() {
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        recognitionProgressView.setVisibility(View.VISIBLE);
+        recognitionProgressView.setSpeechRecognizer(speechRecognizer);
+        recognitionProgressView.setRecognitionListener(this);
         recognitionProgressView.play();
 
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -157,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
         deviceSystemVolume = muteDevice();
         speechRecognizer.startListening(intent);
+        isRecognizeListening = true;
     }
 
     private void showResults(Bundle results) {
@@ -186,7 +219,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         switch (id) {
             case R.drawable.ic_baseline_bookmark_border_24:
                 speechContainer.setVisibility(View.GONE);
-                speechRecognizer.cancel();
+                if(speechRecognizer!=null){
+                    recognitionProgressView.stop();
+                    recognitionProgressView.setVisibility(View.GONE);
+                    speechRecognizer.cancel();
+                }
+                listen.setText("Listen");
+                listen.setBackgroundColor(getColor(R.color.blue));
                 break;
             case R.drawable.ic_baseline_mic_none_24:
                 speechContainer.setVisibility(View.VISIBLE);

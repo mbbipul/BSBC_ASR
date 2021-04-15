@@ -20,21 +20,28 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recognize_texts_recyclerview"
             android:layout_width="match_parent"
-            android:layout_height="450dp"
+            android:layout_height="410dp"
             android:layout_gravity="top"
             tools:listitem="@layout/reconize_speech_text_item" />
-
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/save_conversation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:text="save this conversation"/>
         <com.github.zagum.speechrecognitionview.RecognitionProgressView
             android:id="@+id/recognition_view"
             android:layout_width="wrap_content"
             android:layout_height="100dp"
+            android:visibility="gone"
             android:layout_gravity="center" />
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/listen"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|center"
             android:layout_marginBottom="10dp"
+            android:textColor="@color/white"
             android:text="Listen" />
 
     </LinearLayout>
