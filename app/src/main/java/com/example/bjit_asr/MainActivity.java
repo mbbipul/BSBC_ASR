@@ -17,7 +17,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
+import com.example.bjit_asr.Models.Conversation;
 import com.example.bjit_asr.Models.RecognizeText;
+import com.example.bjit_asr.database.AppDatabase;
 import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
@@ -34,6 +36,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,20 +58,27 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private ArrayList<RecognizeText> recognizeTexts;
     private RecognizeTextAdapter recognizeTextAdapter;
     private MaterialButton listen;
+    private MaterialButton saveConversation;
     private boolean isRecognizeListening;
 
+    AppDatabase db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         isRecognizeListening = false;
+        db = Room.databaseBuilder(getApplicationContext(),
+                AppDatabase.class, "bsbc-asr-ticktalk.db")
+                .allowMainThreadQueries()
+                .build();
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         MeowBottomNavigation bottomNavigation = findViewById(R.id.bottom);
         speechText = findViewById(R.id.speech_text);
         speechContainer = findViewById(R.id.speech_container);
         listen = findViewById(R.id.listen);
+        saveConversation = findViewById(R.id.save_conversation);
 
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_bookmark_border_24, R.drawable.ic_baseline_bookmark_border_24));
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_mic_none_24, R.drawable.ic_baseline_mic_none_24));
@@ -99,6 +109,24 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 } else {
                     callStartRecognition();
                 }
+            }
+        });
+
+        saveConversation.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                Conversation conversation = new Conversation();
+                conversation.title = "titles";
+                conversation.details = "blah blah";
+                long conversationId = db.conversationDao().insertOne(conversation);
+
+                List<RecognizeText> recognizeTextsForDb = new ArrayList<>();
+                for (RecognizeText recText: recognizeTexts) {
+                    recText.setConversationId(conversationId);
+                    recognizeTextsForDb.add(recText);
+                }
+
+                db.recognizeTextDao().insertAll(recognizeTextsForDb);
             }
         });
 

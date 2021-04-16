@@ -6,8 +6,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/all_conversations"
+        android:layout_width="392dp"
+        android:layout_height="449dp"
+        android:layout_gravity="top"
+        app:layout_constraintBottom_toTopOf="@+id/bottom"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/reconize_speech_text_item" />
     <LinearLayout
         android:id="@+id/speech_container"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="615dp"
         android:gravity="center|bottom"
