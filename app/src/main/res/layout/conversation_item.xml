@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:gravity="center">
+        <TextView
+            android:id="@+id/conversation_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="Title goes here"/>
+
+        <TextView
+            android:id="@+id/conversation_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:textSize="7sp"
+            android:text="Monday July 2021 : 12.00 pm"/>
+
+        <TextView
+            android:id="@+id/conversation_details"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:text="Hello folks ! How you are doing Hello folks !Hello folks ! How you are doingHow you are doing Hello folks ! How you are doing"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/see_conversation_texts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="See"/>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

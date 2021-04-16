@@ -23,7 +23,7 @@ public interface ConversationDao {
     @Query("SELECT * FROM conversation WHERE conversationId IN (:textIds)")
     Flowable<List<Conversation>> loadAllByIds(int[] textIds);
 
-    @Query("SELECT * FROM conversation WHERE conversationId IS (:textId)")
+    @Query("SELECT * FROM conversation WHERE conversationId = :textId")
     Single<Conversation> loadById(int textId);
 
     @Transaction

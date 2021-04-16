@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -18,8 +19,10 @@ import android.widget.Toast;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
 import com.example.bjit_asr.Models.Conversation;
+import com.example.bjit_asr.Models.ConversationWithTexts;
 import com.example.bjit_asr.Models.RecognizeText;
 import com.example.bjit_asr.database.AppDatabase;
+import com.example.bjit_asr.ui.Home.ConversationAdapter;
 import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
@@ -34,6 +37,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
@@ -42,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import io.reactivex.functions.Consumer;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
@@ -55,8 +60,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private int deviceSystemVolume ;
     private View speechContainer;
     private RecyclerView recognizeTextRecyclerView;
+    private RecyclerView conversationRecyclerView;
     private ArrayList<RecognizeText> recognizeTexts;
     private RecognizeTextAdapter recognizeTextAdapter;
+    private ConversationAdapter conversationAdapter;
     private MaterialButton listen;
     private MaterialButton saveConversation;
     private boolean isRecognizeListening;
@@ -79,6 +86,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         speechContainer = findViewById(R.id.speech_container);
         listen = findViewById(R.id.listen);
         saveConversation = findViewById(R.id.save_conversation);
+        recognitionProgressView = (RecognitionProgressView) findViewById(R.id.recognition_view);
+        recognizeTextRecyclerView = (RecyclerView) findViewById(R.id.recognize_texts_recyclerview);
+        conversationRecyclerView = findViewById(R.id.all_conversations);
 
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_bookmark_border_24, R.drawable.ic_baseline_bookmark_border_24));
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_mic_none_24, R.drawable.ic_baseline_mic_none_24));
@@ -95,7 +105,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 ContextCompat.getColor(this, R.color.red)
         };
 
-        recognitionProgressView = (RecognitionProgressView) findViewById(R.id.recognition_view);
         recognitionProgressView.setColors(colors);
         recognitionProgressView.play();
 
@@ -130,6 +139,25 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             }
         });
 
+        db.conversationDao().getConversationWithTexts().subscribe(new Consumer<List<ConversationWithTexts>>() {
+            @Override
+            public void accept(@NonNull List<ConversationWithTexts> conversationWithTexts) throws Exception {
+                handleResponse(conversationWithTexts);
+            }
+        });
+
+    }
+
+    private void handleResponse(List<ConversationWithTexts> conversationWithTexts){
+        Log.e("student size :",conversationWithTexts.size()+"");
+        List<Conversation> conversationsList = new ArrayList<>();
+        for (int i=0;i<conversationWithTexts.size();i++){
+            conversationsList.add(conversationWithTexts.get(i).conversation);
+        }
+
+        conversationRecyclerView.setLayoutManager(new GridLayoutManager(this,2));
+        conversationAdapter = new ConversationAdapter(conversationsList);
+        conversationRecyclerView.setAdapter(conversationAdapter);
     }
 
     private void updateRecyclerView(String data){
@@ -140,7 +168,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
 
     private void initializeRecognizeTextRecyclerView(){
-        recognizeTextRecyclerView = (RecyclerView) findViewById(R.id.recognize_texts_recyclerview);
         recognizeTexts = new ArrayList<>() ;
         recognizeTextAdapter = new RecognizeTextAdapter(recognizeTexts);
         recognizeTextRecyclerView.setAdapter(recognizeTextAdapter);
