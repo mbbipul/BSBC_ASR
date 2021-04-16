@@ -22,6 +22,7 @@ import com.example.bjit_asr.Models.Conversation;
 import com.example.bjit_asr.Models.ConversationWithTexts;
 import com.example.bjit_asr.Models.RecognizeText;
 import com.example.bjit_asr.database.AppDatabase;
+import com.example.bjit_asr.database.AppDb;
 import com.example.bjit_asr.ui.Home.ConversationAdapter;
 import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -67,18 +69,16 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private MaterialButton listen;
     private MaterialButton saveConversation;
     private boolean isRecognizeListening;
-
-    AppDatabase db;
+    private Disposable conversationDisposable;
+    private AppDatabase db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         isRecognizeListening = false;
-        db = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "bsbc-asr-ticktalk.db")
-                .allowMainThreadQueries()
-                .build();
+        db = AppDb.getInstance(this);
+
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         MeowBottomNavigation bottomNavigation = findViewById(R.id.bottom);
@@ -138,25 +138,25 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 db.recognizeTextDao().insertAll(recognizeTextsForDb);
             }
         });
+        fetchConversations();
+    }
 
-        db.conversationDao().getConversationWithTexts().subscribe(new Consumer<List<ConversationWithTexts>>() {
+    private void fetchConversations(){
+        conversationDisposable = db.conversationDao().getAll().forEach(new Consumer<List<Conversation>>() {
             @Override
-            public void accept(@NonNull List<ConversationWithTexts> conversationWithTexts) throws Exception {
-                handleResponse(conversationWithTexts);
+            public void accept(@NonNull List<Conversation> conversations) throws Exception {
+                onConversationFetch(conversations);
             }
         });
 
     }
 
-    private void handleResponse(List<ConversationWithTexts> conversationWithTexts){
-        Log.e("student size :",conversationWithTexts.size()+"");
-        List<Conversation> conversationsList = new ArrayList<>();
-        for (int i=0;i<conversationWithTexts.size();i++){
-            conversationsList.add(conversationWithTexts.get(i).conversation);
-        }
+
+    private void onConversationFetch(List<Conversation> conversations){
+        Log.e("student size :",conversations.size()+"");
 
         conversationRecyclerView.setLayoutManager(new GridLayoutManager(this,2));
-        conversationAdapter = new ConversationAdapter(conversationsList);
+        conversationAdapter = new ConversationAdapter(conversations);
         conversationRecyclerView.setAdapter(conversationAdapter);
     }
 
@@ -164,6 +164,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         recognizeTexts.add(new RecognizeText(data));
         recognizeTextAdapter.notifyDataSetChanged();
         recognizeTextRecyclerView.scrollToPosition(recognizeTexts.size()-1);
+        if(recognizeTexts.size() > 0){
+            saveConversation.setVisibility(View.VISIBLE);
+        }
     }
 
 
@@ -273,7 +276,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         int id = model.getId();
         switch (id) {
             case R.drawable.ic_baseline_bookmark_border_24:
-                speechContainer.setVisibility(View.GONE);
+                speechContainer.setVisibility(View.INVISIBLE);
+                conversationRecyclerView.setVisibility(View.VISIBLE);
                 if(speechRecognizer!=null){
                     recognitionProgressView.stop();
                     recognitionProgressView.setVisibility(View.GONE);
@@ -283,6 +287,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 listen.setBackgroundColor(getColor(R.color.blue));
                 break;
             case R.drawable.ic_baseline_mic_none_24:
+                conversationDisposable.dispose();
+                conversationRecyclerView.setVisibility(View.INVISIBLE);
                 speechContainer.setVisibility(View.VISIBLE);
                 initializeRecognizeTextRecyclerView();
                 break;

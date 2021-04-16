@@ -9,8 +9,9 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/all_conversations"
         android:layout_width="match_parent"
-        android:layout_height="449dp"
+        android:layout_height="586dp"
         android:layout_gravity="top"
+        android:layout_marginTop="20dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:layout_constraintBottom_toTopOf="@+id/bottom"
         app:layout_constraintEnd_toEndOf="parent"
@@ -23,6 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="615dp"
         android:gravity="center|bottom"
+        android:layout_marginTop="10dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/bottom"
         app:layout_constraintEnd_toEndOf="parent"
@@ -35,10 +37,12 @@
             android:layout_height="410dp"
             android:layout_gravity="top"
             tools:listitem="@layout/reconize_speech_text_item" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/save_conversation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             android:textColor="@color/white"
             android:text="save this conversation"/>
         <com.github.zagum.speechrecognitionview.RecognitionProgressView

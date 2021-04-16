@@ -1,6 +1,7 @@
 package com.example.bjit_asr.ui.Home;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.bjit_asr.ConversationsActivity;
 import com.example.bjit_asr.Models.Conversation;
 import com.example.bjit_asr.Models.RecognizeText;
 import com.example.bjit_asr.R;
@@ -45,6 +47,16 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
             holder.conversationTitle.setText(conversation.title);
             holder.conversationDetails.setText(conversation.details);
             holder.conversationDate.setText(conversation.saveAt);
+
+            holder.seeConversationTexts.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(view.getContext(), ConversationsActivity.class);
+                    intent.putExtra("conversationId",conversation.conversationId);
+                    intent.putExtra("conversationTitle",conversation.title);
+                    view.getContext().startActivity(intent);
+                }
+            });
 
     }
 

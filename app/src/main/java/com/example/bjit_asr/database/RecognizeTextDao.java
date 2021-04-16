@@ -19,6 +19,9 @@ public interface RecognizeTextDao {
     @Query("SELECT * FROM recognizetext WHERE recognizeTextId IN (:textIds)")
     Flowable<List<RecognizeText>> loadAllByIds(int[] textIds);
 
+    @Query("SELECT * FROM recognizetext WHERE  conversationId IN (:conversationId)")
+    Flowable<List<RecognizeText>> getRecognizeTextsByConversation(long conversationId);
+
     @Insert
     void insertAll(List<RecognizeText> recognizeTexts);
 
