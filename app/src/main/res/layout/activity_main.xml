@@ -34,7 +34,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recognize_texts_recyclerview"
             android:layout_width="match_parent"
-            android:layout_height="410dp"
+            android:layout_height="405dp"
             android:layout_gravity="top"
             tools:listitem="@layout/reconize_speech_text_item" />
 

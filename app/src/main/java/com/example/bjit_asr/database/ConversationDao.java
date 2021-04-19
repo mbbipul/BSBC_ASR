@@ -18,7 +18,7 @@ import io.reactivex.Single;
 @Dao
 public interface ConversationDao {
     @Query("SELECT * FROM conversation")
-    Flowable<List<Conversation>> getAll();
+    List<Conversation> getAll();
 
     @Query("SELECT * FROM conversation WHERE conversationId IN (:textIds)")
     Flowable<List<Conversation>> loadAllByIds(int[] textIds);

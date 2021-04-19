@@ -3,6 +3,7 @@ package com.example.bjit_asr;
 import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
@@ -11,9 +12,11 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,12 +28,14 @@ import com.example.bjit_asr.database.AppDatabase;
 import com.example.bjit_asr.database.AppDb;
 import com.example.bjit_asr.ui.Home.ConversationAdapter;
 import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
+import com.example.bjit_asr.utils.Utils;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -44,6 +49,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -63,13 +69,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private View speechContainer;
     private RecyclerView recognizeTextRecyclerView;
     private RecyclerView conversationRecyclerView;
-    private ArrayList<RecognizeText> recognizeTexts;
+    final private ArrayList<RecognizeText> recognizeTexts = new ArrayList<>() ;
     private RecognizeTextAdapter recognizeTextAdapter;
     private ConversationAdapter conversationAdapter;
     private MaterialButton listen;
     private MaterialButton saveConversation;
     private boolean isRecognizeListening;
-    private Disposable conversationDisposable;
     private AppDatabase db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,39 +129,59 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         saveConversation.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
-                Conversation conversation = new Conversation();
-                conversation.title = "titles";
-                conversation.details = "blah blah";
-                long conversationId = db.conversationDao().insertOne(conversation);
-
-                List<RecognizeText> recognizeTextsForDb = new ArrayList<>();
-                for (RecognizeText recText: recognizeTexts) {
-                    recText.setConversationId(conversationId);
-                    recognizeTextsForDb.add(recText);
-                }
-
-                db.recognizeTextDao().insertAll(recognizeTextsForDb);
+                openSaveConversation();
             }
         });
-        fetchConversations();
     }
 
-    private void fetchConversations(){
-        conversationDisposable = db.conversationDao().getAll().forEach(new Consumer<List<Conversation>>() {
+    private void openSaveConversation(){
+        final View view = LayoutInflater.from(this).inflate(R.layout.save_conversation_dialog, null);
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Save conversation");
+        alertDialog.setCancelable(false);
+
+        final EditText title = (EditText) view.findViewById(R.id.title);
+        final EditText details = (EditText) view.findViewById(R.id.details);
+
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
             @Override
-            public void accept(@NonNull List<Conversation> conversations) throws Exception {
-                onConversationFetch(conversations);
+            public void onClick(DialogInterface dialog, int which) {
+                Conversation conversation = new Conversation();
+                conversation.title = title.getText().toString();
+                if (conversation.title != "" || conversation.title != " "){
+                    conversation.details = details.getText().toString();
+                    conversation.saveAt = String.valueOf(Calendar.getInstance().getTime());
+                    long conversationId = db.conversationDao().insertOne(conversation);
+
+                    List<RecognizeText> recognizeTextsForDb = new ArrayList<>();
+                    for (RecognizeText recText: recognizeTexts) {
+                        recText.setConversationId(conversationId);
+                        recognizeTextsForDb.add(recText);
+                    }
+
+                    db.recognizeTextDao().insertAll(recognizeTextsForDb);
+                    showToast("Successfully save conversation !");
+                }else {
+                    showToast("Please insert a title");
+                }
             }
         });
 
+
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                alertDialog.dismiss();
+            }
+        });
+
+
+        alertDialog.setView(view);
+        alertDialog.show();
     }
-
-
-    private void onConversationFetch(List<Conversation> conversations){
-        Log.e("student size :",conversations.size()+"");
-
+    private void fetchConversations(){
         conversationRecyclerView.setLayoutManager(new GridLayoutManager(this,2));
-        conversationAdapter = new ConversationAdapter(conversations);
+        conversationAdapter = new ConversationAdapter(db.conversationDao().getAll());
         conversationRecyclerView.setAdapter(conversationAdapter);
     }
 
@@ -171,7 +196,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
 
     private void initializeRecognizeTextRecyclerView(){
-        recognizeTexts = new ArrayList<>() ;
         recognizeTextAdapter = new RecognizeTextAdapter(recognizeTexts);
         recognizeTextRecyclerView.setAdapter(recognizeTextAdapter);
         recognizeTextRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -278,6 +302,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             case R.drawable.ic_baseline_bookmark_border_24:
                 speechContainer.setVisibility(View.INVISIBLE);
                 conversationRecyclerView.setVisibility(View.VISIBLE);
+                saveConversation.setVisibility(View.INVISIBLE);
                 if(speechRecognizer!=null){
                     recognitionProgressView.stop();
                     recognitionProgressView.setVisibility(View.GONE);
@@ -285,12 +310,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 }
                 listen.setText("Listen");
                 listen.setBackgroundColor(getColor(R.color.blue));
+                fetchConversations();
                 break;
             case R.drawable.ic_baseline_mic_none_24:
-                conversationDisposable.dispose();
                 conversationRecyclerView.setVisibility(View.INVISIBLE);
                 speechContainer.setVisibility(View.VISIBLE);
                 initializeRecognizeTextRecyclerView();
+                conversationRecyclerView.setAdapter(null);
                 break;
         }
         return null;

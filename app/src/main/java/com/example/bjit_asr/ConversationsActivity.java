@@ -38,7 +38,7 @@ public class ConversationsActivity extends AppCompatActivity {
         String conversatonTitle = intent.getStringExtra("conversationTitle");
 
         setTitle(conversatonTitle);
-
+        Toast.makeText(this, String.valueOf(conversationId), Toast.LENGTH_SHORT).show();
         if (conversationId > 0){
             db.recognizeTextDao().getRecognizeTextsByConversation(conversationId)
                     .subscribe(new Consumer<List<RecognizeText>>() {
