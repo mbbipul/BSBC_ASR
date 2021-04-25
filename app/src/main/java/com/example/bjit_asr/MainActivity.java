@@ -6,8 +6,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -17,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +37,7 @@ import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.zxing.WriterException;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -53,6 +58,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+import androidmads.library.qrgenearator.QRGContents;
+import androidmads.library.qrgenearator.QRGEncoder;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import kotlin.Unit;
@@ -67,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private AudioManager audioManager;
     private int deviceSystemVolume ;
     private View speechContainer;
+    private View remoteConversationContainer;
     private RecyclerView recognizeTextRecyclerView;
     private RecyclerView conversationRecyclerView;
     final private ArrayList<RecognizeText> recognizeTexts = new ArrayList<>() ;
@@ -74,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private ConversationAdapter conversationAdapter;
     private MaterialButton listen;
     private MaterialButton saveConversation;
+    private MaterialButton startRemoteConversation;
+    private ImageView remoteConversationQrImage;
     private boolean isRecognizeListening;
     private AppDatabase db;
     @Override
@@ -89,15 +99,19 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         MeowBottomNavigation bottomNavigation = findViewById(R.id.bottom);
         speechText = findViewById(R.id.speech_text);
         speechContainer = findViewById(R.id.speech_container);
+        remoteConversationContainer = findViewById(R.id.remote_conversation_container);
         listen = findViewById(R.id.listen);
+        startRemoteConversation = findViewById(R.id.start_remote_conversation);
+        remoteConversationQrImage = findViewById(R.id.remote_conversation_qr_code);
         saveConversation = findViewById(R.id.save_conversation);
         recognitionProgressView = (RecognitionProgressView) findViewById(R.id.recognition_view);
         recognizeTextRecyclerView = (RecyclerView) findViewById(R.id.recognize_texts_recyclerview);
         conversationRecyclerView = findViewById(R.id.all_conversations);
 
-        bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_bookmark_border_24, R.drawable.ic_baseline_bookmark_border_24));
+        bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_speaker_notes_24, R.drawable.ic_baseline_speaker_notes_24));
         bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_mic_none_24, R.drawable.ic_baseline_mic_none_24));
-        bottomNavigation.show(R.drawable.ic_baseline_bookmark_border_24, true);
+        bottomNavigation.add(new MeowBottomNavigation.Model(R.drawable.ic_baseline_online_prediction_24, R.drawable.ic_baseline_online_prediction_24));
+        bottomNavigation.show(R.drawable.ic_baseline_speaker_notes_24, true);
 
         bottomNavigation.setOnClickMenuListener(this);
         bottomNavigation.setOnShowListener(this);
@@ -299,27 +313,58 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     public Unit invoke(MeowBottomNavigation.Model model) {
         int id = model.getId();
         switch (id) {
-            case R.drawable.ic_baseline_bookmark_border_24:
-                speechContainer.setVisibility(View.INVISIBLE);
+            case R.drawable.ic_baseline_speaker_notes_24:
+                hideRemoteConversationContainer();
+                hideSpeechContainer();
                 conversationRecyclerView.setVisibility(View.VISIBLE);
-                saveConversation.setVisibility(View.INVISIBLE);
-                if(speechRecognizer!=null){
-                    recognitionProgressView.stop();
-                    recognitionProgressView.setVisibility(View.GONE);
-                    speechRecognizer.cancel();
-                }
-                listen.setText("Listen");
-                listen.setBackgroundColor(getColor(R.color.blue));
                 fetchConversations();
                 break;
             case R.drawable.ic_baseline_mic_none_24:
-                conversationRecyclerView.setVisibility(View.INVISIBLE);
+                hideConversationContainer();
+                hideRemoteConversationContainer();
                 speechContainer.setVisibility(View.VISIBLE);
                 initializeRecognizeTextRecyclerView();
                 conversationRecyclerView.setAdapter(null);
                 break;
+            case R.drawable.ic_baseline_online_prediction_24:
+                hideConversationContainer();
+                hideSpeechContainer();
+                remoteConversationContainer.setVisibility(View.VISIBLE);
+                remoteConversationQrImage.setImageBitmap(generateRemoteConSessionQr());
+                break;
         }
         return null;
+    }
+
+    private Bitmap generateRemoteConSessionQr(){
+        String android_id = Settings.Secure.getString(this.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+        // Initializing the QR Encoder with your value to be encoded, type you required and Dimension
+        QRGEncoder qrgEncoder = new QRGEncoder(android_id, null, QRGContents.Type.TEXT, 300);
+        qrgEncoder.setColorBlack(Color.BLACK);
+        qrgEncoder.setColorWhite(Color.WHITE);
+        return  qrgEncoder.getBitmap();
+
+    }
+
+    private void hideConversationContainer(){
+        conversationRecyclerView.setVisibility(View.INVISIBLE);
+    }
+
+    private void hideSpeechContainer(){
+        speechContainer.setVisibility(View.INVISIBLE);
+        saveConversation.setVisibility(View.INVISIBLE);
+        if(speechRecognizer!=null){
+            recognitionProgressView.stop();
+            recognitionProgressView.setVisibility(View.GONE);
+            speechRecognizer.cancel();
+        }
+        listen.setText("Listen");
+        listen.setBackgroundColor(getColor(R.color.blue));
+    }
+
+    private void hideRemoteConversationContainer(){
+        remoteConversationContainer.setVisibility(View.INVISIBLE);
     }
 
     @Override
