@@ -42,5 +42,6 @@
         android:focusable="true"
         app:layout_constraintBottom_toBottomOf="@+id/recognition_view"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/listen"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -65,10 +65,14 @@ import io.reactivex.functions.Consumer;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
+import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
+import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
+import static com.example.bjit_asr.utils.Utils.muteDevice;
+import static com.example.bjit_asr.utils.Utils.unMuteDevice;
+
 public class MainActivity extends AppCompatActivity implements RecognitionListener,Function1<MeowBottomNavigation.Model, Unit> {
 
     private TextView speechText;
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION_CODE = 1;
     private SpeechRecognizer speechRecognizer;
     private RecognitionProgressView recognitionProgressView;
     private AudioManager audioManager;
@@ -116,15 +120,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         bottomNavigation.setOnClickMenuListener(this);
         bottomNavigation.setOnShowListener(this);
 
-        int[] colors = {
-                ContextCompat.getColor(this, R.color.yellow),
-                ContextCompat.getColor(this, R.color.blue),
-                ContextCompat.getColor(this, R.color.purple_200),
-                ContextCompat.getColor(this, R.color.black),
-                ContextCompat.getColor(this, R.color.red)
-        };
-
-        recognitionProgressView.setColors(colors);
+        recognitionProgressView.setColors(getRecognitionProgressViewColor(this));
         recognitionProgressView.play();
 
         listen.setOnClickListener(new View.OnClickListener() {
@@ -133,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 if (ContextCompat.checkSelfPermission(MainActivity.this,
                         Manifest.permission.RECORD_AUDIO)
                         != PackageManager.PERMISSION_GRANTED) {
-                    requestPermission();
+                    requestAudioPermission();
                 } else {
                     callStartRecognition();
                 }
@@ -229,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         if (speechRecognizer != null) {
             speechRecognizer.destroy();
         }
-        unMuteDevice(deviceSystemVolume);
+        unMuteDevice(audioManager,deviceSystemVolume);
         super.onDestroy();
     }
 
@@ -269,15 +265,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         listen.setText("Stop Listening");
         listen.setBackgroundColor(getColor(R.color.red));
     }
-    private int muteDevice(){
-        audioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
-        return audioManager.getStreamVolume(AudioManager.STREAM_SYSTEM);
-    }
-
-    private void unMuteDevice(int volume){
-        audioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, volume,
-                AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
-    }
 
     private void startRecognition() {
 
@@ -292,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en");
 
-        deviceSystemVolume = muteDevice();
+        deviceSystemVolume = muteDevice(audioManager);
         speechRecognizer.startListening(intent);
         isRecognizeListening = true;
     }
@@ -306,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         startRecognition();
     }
 
-    private void requestPermission() {
+    private void requestAudioPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.RECORD_AUDIO)) {
             Toast.makeText(this, "Requires RECORD_AUDIO permission", Toast.LENGTH_SHORT).show();
@@ -398,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onEndOfSpeech() {
-        unMuteDevice(deviceSystemVolume);
+        unMuteDevice(audioManager,deviceSystemVolume);
     }
 
     @Override
@@ -418,7 +405,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onResults(Bundle bundle) {
         showResults(bundle);
-        unMuteDevice(deviceSystemVolume);
+        unMuteDevice(audioManager,deviceSystemVolume);
     }
 
     @Override
