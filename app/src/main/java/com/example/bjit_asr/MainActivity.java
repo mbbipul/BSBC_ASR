@@ -146,6 +146,15 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 openSaveConversation();
             }
         });
+
+        startRemoteConversation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
+                startActivity(remoteConversation);
+
+            }
+        });
     }
 
     private void openSaveConversation(){

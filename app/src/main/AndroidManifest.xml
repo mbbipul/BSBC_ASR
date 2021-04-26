@@ -12,7 +12,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BJIT_ASR">
-        <activity android:name=".ConversationsActivity"></activity>
+        <activity android:name=".RemoteConversation"></activity>
+        <activity android:name=".ConversationsActivity" />
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name">
