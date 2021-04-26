@@ -16,12 +16,17 @@ import android.speech.SpeechRecognizer;
 import android.view.View;
 import android.widget.Toast;
 
+import com.example.bjit_asr.Models.RemoteMessage;
+import com.example.bjit_asr.Models.RemoteUser;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
+import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
+import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
 import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
 import static com.example.bjit_asr.utils.Utils.muteDevice;
 import static com.example.bjit_asr.utils.Utils.showSnackMessage;
@@ -180,6 +185,15 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
     private void showToast(String msg){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+
+        RemoteUser remoteUser = new RemoteUser();
+        remoteUser.setUserId(getDeviceUniqueId(this));
+        remoteUser.setUserName("Test bb");
+
+        RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(Calendar.getInstance().getTime()));
+
+        getDbRef().document(getDeviceUniqueId(this)).collection("messages").add(remoteMessage);
+
         recognitionProgressView.stop();
         startRecognition();
     }

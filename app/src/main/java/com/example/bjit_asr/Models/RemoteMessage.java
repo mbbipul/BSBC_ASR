@@ -8,6 +8,12 @@ public class RemoteMessage {
         return message;
     }
 
+    public RemoteMessage(String message, RemoteUser sender, String createdAt) {
+        this.message = message;
+        this.sender = sender;
+        this.createdAt = createdAt;
+    }
+
     public void setMessage(String message) {
         this.message = message;
     }

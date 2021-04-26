@@ -2,6 +2,7 @@ package com.example.bjit_asr.utils;
 
 import android.content.Context;
 import android.media.AudioManager;
+import android.provider.Settings;
 import android.view.View;
 
 import androidx.core.content.ContextCompat;
@@ -44,6 +45,11 @@ public class Utils {
         };
 
         return colors;
+    }
+
+    public static String getDeviceUniqueId(Context context) {
+        return Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
     }
 
 

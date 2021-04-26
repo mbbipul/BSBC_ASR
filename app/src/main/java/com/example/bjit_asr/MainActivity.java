@@ -66,6 +66,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
+import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
 import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
 import static com.example.bjit_asr.utils.Utils.muteDevice;
 import static com.example.bjit_asr.utils.Utils.unMuteDevice;
@@ -333,8 +334,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private Bitmap generateRemoteConSessionQr(){
-        String android_id = Settings.Secure.getString(this.getContentResolver(),
-                Settings.Secure.ANDROID_ID);
+        String android_id = getDeviceUniqueId(this);
         // Initializing the QR Encoder with your value to be encoded, type you required and Dimension
         QRGEncoder qrgEncoder = new QRGEncoder(android_id, null, QRGContents.Type.TEXT, 300);
         qrgEncoder.setColorBlack(Color.BLACK);
