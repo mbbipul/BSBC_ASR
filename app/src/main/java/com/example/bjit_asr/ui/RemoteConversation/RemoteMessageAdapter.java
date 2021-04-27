@@ -7,42 +7,51 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bjit_asr.Models.RemoteMessage;
+import com.example.bjit_asr.Models.RemoteUser;
 import com.example.bjit_asr.R;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.firebase.database.DatabaseReference;
 
 import java.util.List;
 
-public class RemoteMessageAdapter extends  RecyclerView.Adapter {
+import static com.example.bjit_asr.utils.Utils.VIEW_TYPE_MESSAGE_RECEIVED;
+import static com.example.bjit_asr.utils.Utils.VIEW_TYPE_MESSAGE_SENT;
+import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
+
+public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage, RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_MESSAGE_SENT = 1;
     private static final int VIEW_TYPE_MESSAGE_RECEIVED = 2;
 
     private Context mContext;
-    private List<RemoteMessage> mMessageList;
+    FirebaseRecyclerOptions firebaseRecyclerOptions ;
 
-    public RemoteMessageAdapter(Context context, List<RemoteMessage> messageList) {
+    public RemoteMessageAdapter(Context context, @NonNull FirebaseRecyclerOptions options) {
+        super(options);
         mContext = context;
-        mMessageList = messageList;
+        firebaseRecyclerOptions = options;
     }
 
-    @Override
-    public int getItemCount() {
-        return mMessageList.size();
+    private int getUserType(RemoteUser remoteUser){
+        if (getDeviceUniqueId(mContext) == remoteUser.getUserId())
+            return VIEW_TYPE_MESSAGE_SENT;
+        return VIEW_TYPE_MESSAGE_RECEIVED;
     }
 
-    // Determines the appropriate ViewType according to the sender of the message.
     @Override
     public int getItemViewType(int position) {
-        RemoteMessage message = (RemoteMessage) mMessageList.get(position);
-
-        if (message.getSender().getUserId().equals("")) {
-            // If the current user is the sender of the message
-            return VIEW_TYPE_MESSAGE_SENT;
-        } else {
-            // If some other user sent the message
-            return VIEW_TYPE_MESSAGE_RECEIVED;
+        RemoteMessage remoteMessage = getItem(position);
+        switch (getUserType(remoteMessage.getSender())) {
+            case VIEW_TYPE_MESSAGE_SENT:
+                return VIEW_TYPE_MESSAGE_SENT;
+            case VIEW_TYPE_MESSAGE_RECEIVED:
+                return VIEW_TYPE_MESSAGE_RECEIVED;
         }
+        return super.getItemViewType(position);
     }
 
     // Inflates the appropriate layout according to the ViewType.
@@ -52,11 +61,11 @@ public class RemoteMessageAdapter extends  RecyclerView.Adapter {
 
         if (viewType == VIEW_TYPE_MESSAGE_SENT) {
             view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.remote_conversation_other_pers_list_item, parent, false);
+                    .inflate(R.layout.remote_conversation_me_perspect_item, parent, false);
             return new SentMessageHolder(view);
         } else if (viewType == VIEW_TYPE_MESSAGE_RECEIVED) {
             view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.remote_conversation_me_perspect_item, parent, false);
+                    .inflate(R.layout.remote_conversation_other_pers_list_item, parent, false);
             return new ReceivedMessageHolder(view);
         }
 
@@ -65,17 +74,18 @@ public class RemoteMessageAdapter extends  RecyclerView.Adapter {
 
     // Passes the message object to a ViewHolder so that the contents can be bound to UI.
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        RemoteMessage message = mMessageList.get(position);
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position,RemoteMessage remoteMessage) {
 
         switch (holder.getItemViewType()) {
             case VIEW_TYPE_MESSAGE_SENT:
-                ((SentMessageHolder) holder).bind(message);
+                ((SentMessageHolder) holder).bind(remoteMessage);
                 break;
             case VIEW_TYPE_MESSAGE_RECEIVED:
-                ((ReceivedMessageHolder) holder).bind(message);
+                ((ReceivedMessageHolder) holder).bind(remoteMessage);
         }
     }
+
+
 
     private class SentMessageHolder extends RecyclerView.ViewHolder {
         TextView messageText, timeText;
@@ -113,8 +123,6 @@ public class RemoteMessageAdapter extends  RecyclerView.Adapter {
 
             // Format the stored timestamp into a readable String using method.
             timeText.setText("");
-
-            nameText.setText("message.getSender().getNickname()");
 
             // Insert the profile image from the URL into the ImageView.
         }

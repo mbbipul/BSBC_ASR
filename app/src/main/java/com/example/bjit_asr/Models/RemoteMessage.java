@@ -3,6 +3,7 @@ package com.example.bjit_asr.Models;
 public class RemoteMessage {
     String message;
     RemoteUser sender;
+    String createdAt;
 
     public String getMessage() {
         return message;
@@ -13,6 +14,8 @@ public class RemoteMessage {
         this.sender = sender;
         this.createdAt = createdAt;
     }
+
+    public RemoteMessage(){}
 
     public void setMessage(String message) {
         this.message = message;
@@ -26,13 +29,12 @@ public class RemoteMessage {
         this.sender = sender;
     }
 
-    public long getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
-    long createdAt;
 }

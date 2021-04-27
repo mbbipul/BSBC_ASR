@@ -8,7 +8,7 @@
     tools:context=".RemoteConversation">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/all_conversations"
+        android:id="@+id/remote_conversations"
         android:layout_width="match_parent"
         android:layout_height="586dp"
         android:layout_gravity="top"

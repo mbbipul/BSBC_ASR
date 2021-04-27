@@ -5,6 +5,8 @@ public class RemoteUser {
     private String userName;
     private String userProfileUrl;
 
+    public RemoteUser(){}
+
     public String getUserId() {
         return userId;
     }

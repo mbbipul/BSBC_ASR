@@ -31,7 +31,7 @@ android {
 
 dependencies {
 
-    implementation 'com.google.firebase:firebase-firestore:22.1.2'
+
     def room_version = "2.2.6"
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
@@ -43,6 +43,9 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment:2.3.4'
     implementation 'androidx.navigation:navigation-ui:2.3.4'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.61"
+
+    implementation 'com.google.firebase:firebase-firestore:22.1.2'
+    implementation 'com.firebaseui:firebase-ui-database:7.1.1'
 
     implementation 'com.etebarian:meow-bottom-navigation:1.0.0'
     implementation'com.github.zagum:SpeechRecognitionView:1.2.2'

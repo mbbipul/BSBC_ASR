@@ -3,6 +3,8 @@ package com.example.bjit_asr;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Context;
@@ -18,8 +20,12 @@ import android.widget.Toast;
 
 import com.example.bjit_asr.Models.RemoteMessage;
 import com.example.bjit_asr.Models.RemoteUser;
+import com.example.bjit_asr.ui.RemoteConversation.RemoteMessageAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.firestore.DocumentReference;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -39,6 +45,8 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     int deviceSystemVolume;
     boolean isRecognizeListening;
     MaterialButton listen;
+    RecyclerView remoteConverRecyclerView;
+    RemoteMessageAdapter remoteMessageAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +58,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         isRecognizeListening = false;
         recognitionProgressView = findViewById(R.id.recognition_view);
         listen = findViewById(R.id.listen);
-
+        remoteConverRecyclerView = findViewById(R.id.remote_conversations);
 
         recognitionProgressView.setColors(getRecognitionProgressViewColor(this));
         recognitionProgressView.play();
@@ -69,7 +77,31 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
             }
         });
 
+        FirebaseRecyclerOptions<RemoteMessage> options =
+                new FirebaseRecyclerOptions.Builder<RemoteMessage>()
+                        .setQuery(getDbRef().child(getDeviceUniqueId(this)), RemoteMessage.class)
+                        .build();
 
+        remoteMessageAdapter = new RemoteMessageAdapter(this,options);
+
+        LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
+        mLinearLayoutManager.setStackFromEnd(true);
+        remoteConverRecyclerView.setLayoutManager(mLinearLayoutManager);
+        remoteConverRecyclerView.setAdapter(remoteMessageAdapter);
+
+
+    }
+
+    @Override
+    public void onPause() {
+        remoteMessageAdapter.stopListening();
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        remoteMessageAdapter.startListening();
     }
 
     private void callStartRecognition(){
@@ -192,7 +224,12 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
         RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(Calendar.getInstance().getTime()));
 
-        getDbRef().document(getDeviceUniqueId(this)).collection("messages").add(remoteMessage);
+        getDbRef().child(remoteUser.getUserId()).push().setValue(remoteMessage).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Toast.makeText(RemoteConversation.this, "added", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         recognitionProgressView.stop();
         startRecognition();

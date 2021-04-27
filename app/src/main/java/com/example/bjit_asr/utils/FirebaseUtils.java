@@ -1,16 +1,16 @@
 package com.example.bjit_asr.utils;
 
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class FirebaseUtils {
     public static final String DATABASE_ROOT_PATH= "ux_bjit_asr";
 
-    public static FirebaseFirestore getFireStoreDb() {
-        return FirebaseFirestore.getInstance();
+    public static FirebaseDatabase getFirebaseDB() {
+        return FirebaseDatabase.getInstance();
     }
 
-    public static CollectionReference getDbRef() {
-        return getFireStoreDb().collection(DATABASE_ROOT_PATH);
+    public static DatabaseReference getDbRef() {
+        return getFirebaseDB().getReference().child(DATABASE_ROOT_PATH);
     }
 }
