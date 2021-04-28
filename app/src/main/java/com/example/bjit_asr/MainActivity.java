@@ -6,10 +6,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -37,9 +41,18 @@ import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.ChecksumException;
+import com.google.zxing.FormatException;
+import com.google.zxing.NotFoundException;
+import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.Result;
 import com.google.zxing.WriterException;
+import com.google.zxing.common.GlobalHistogramBinarizer;
+import com.google.zxing.qrcode.QRCodeReader;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -54,6 +67,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -88,9 +102,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private MaterialButton listen;
     private MaterialButton saveConversation;
     private MaterialButton startRemoteConversation;
+    private MaterialButton joinRemoteConversation;
     private ImageView remoteConversationQrImage;
     private boolean isRecognizeListening;
     private AppDatabase db;
+    static final int PICK_IMAGE = 355;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         remoteConversationContainer = findViewById(R.id.remote_conversation_container);
         listen = findViewById(R.id.listen);
         startRemoteConversation = findViewById(R.id.start_remote_conversation);
+        joinRemoteConversation = findViewById(R.id.join_remote_conversation);
         remoteConversationQrImage = findViewById(R.id.remote_conversation_qr_code);
         saveConversation = findViewById(R.id.save_conversation);
         recognitionProgressView = (RecognitionProgressView) findViewById(R.id.recognition_view);
@@ -152,6 +169,27 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
             }
         });
+
+        joinRemoteConversation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickImage();
+            }
+        });
+    }
+
+    public void pickImage() {
+        Intent intent = new Intent(Intent.ACTION_PICK,
+                MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        intent.putExtra("crop", "true");
+        intent.putExtra("scale", true);
+        intent.putExtra("outputX", 256);
+        intent.putExtra("outputY", 256);
+        intent.putExtra("aspectX", 1);
+        intent.putExtra("aspectY", 1);
+        intent.putExtra("return-data", true);
+        startActivityForResult(intent, PICK_IMAGE);
     }
 
     private void openSaveConversation(){
@@ -229,6 +267,49 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         unMuteDevice(audioManager,deviceSystemVolume);
         super.onDestroy();
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK) {
+            return;
+        }
+        if (requestCode == PICK_IMAGE) {
+            final Bundle extras = data.getExtras();
+            if (extras != null) {
+                //Get image
+                Bitmap newProfilePic = extras.getParcelable("data");
+                parseInfoFromBitmap(newProfilePic);
+            }
+        }
+
+    }
+
+    public Result parseInfoFromBitmap(Bitmap bitmap) {
+        int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
+        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+        Log.v("HGH" ,Arrays.toString(pixels).toString());
+
+        RGBLuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(),
+                bitmap.getHeight(), pixels);
+        GlobalHistogramBinarizer binarizer = new GlobalHistogramBinarizer(source);
+        BinaryBitmap image = new BinaryBitmap(binarizer);
+        Result result = null;
+        try {
+            result = new QRCodeReader().decode(image);
+            return result;
+        } catch (NotFoundException e) {
+            e.printStackTrace();
+        } catch (ChecksumException e) {
+            e.printStackTrace();
+        } catch (FormatException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+
+    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode,

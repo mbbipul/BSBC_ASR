@@ -67,7 +67,7 @@
         android:id="@+id/remote_conversation_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center|center_vertical"
+        android:gravity="top|center_horizontal|center_vertical"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/bottom">
 
@@ -75,7 +75,7 @@
             android:id="@+id/remote_conversation_qr_code"
             android:layout_width="300dp"
             android:layout_height="300dp"
-            android:layout_marginBottom="100dp"/>
+            android:layout_marginBottom="20dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/start_remote_conversation"
@@ -83,6 +83,19 @@
             android:layout_height="wrap_content"
             android:padding="20dp"
             android:text="Start Remote Conversation"
+            android:textColor="@color/white" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25sp"
+            android:text="Or"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/join_remote_conversation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:text="JOIN Remote Conversation"
             android:textColor="@color/white" />
     </LinearLayout>
 
