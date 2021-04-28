@@ -1,6 +1,7 @@
 package com.example.bjit_asr.ui.RemoteConversation;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,12 +16,6 @@ import com.example.bjit_asr.Models.RemoteUser;
 import com.example.bjit_asr.R;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.google.firebase.database.DatabaseReference;
-
-import java.util.List;
-
-import static com.example.bjit_asr.utils.Utils.VIEW_TYPE_MESSAGE_RECEIVED;
-import static com.example.bjit_asr.utils.Utils.VIEW_TYPE_MESSAGE_SENT;
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
 
 public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage, RecyclerView.ViewHolder> {
@@ -37,8 +32,11 @@ public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage,
     }
 
     private int getUserType(RemoteUser remoteUser){
-        if (getDeviceUniqueId(mContext) == remoteUser.getUserId())
+        if (getDeviceUniqueId(mContext).equals(remoteUser.getUserId())){
+            Log.v("SENT_IDS",getDeviceUniqueId(mContext)+" ,"+remoteUser.getUserId());
             return VIEW_TYPE_MESSAGE_SENT;
+        }
+        Log.v("REC_IDS",getDeviceUniqueId(mContext)+" ,"+remoteUser.getUserId());
         return VIEW_TYPE_MESSAGE_RECEIVED;
     }
 
