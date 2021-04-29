@@ -1,5 +1,6 @@
 package com.example.bjit_asr;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -8,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
@@ -15,11 +17,18 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.example.bjit_asr.Models.Conversation;
+import com.example.bjit_asr.Models.RecognizeText;
 import com.example.bjit_asr.Models.RemoteMessage;
 import com.example.bjit_asr.Models.RemoteUser;
+import com.example.bjit_asr.database.AppDatabase;
+import com.example.bjit_asr.database.AppDb;
 import com.example.bjit_asr.ui.RemoteConversation.RemoteMessageAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
@@ -29,6 +38,7 @@ import com.google.firebase.firestore.DocumentReference;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
@@ -48,11 +58,17 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     RecyclerView remoteConverRecyclerView;
     RemoteMessageAdapter remoteMessageAdapter;
 
+    String conversationId;
+    private AppDatabase db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_remote_conversation);
 
+        Intent intent = getIntent();
+        conversationId = intent.getStringExtra("conversationId");
+        db = AppDb.getInstance(this);
 
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
         isRecognizeListening = false;
@@ -79,7 +95,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
         FirebaseRecyclerOptions<RemoteMessage> options =
                 new FirebaseRecyclerOptions.Builder<RemoteMessage>()
-                        .setQuery(getDbRef().child(getDeviceUniqueId(this)), RemoteMessage.class)
+                        .setQuery(getDbRef().child(conversationId), RemoteMessage.class)
                         .build();
 
         remoteMessageAdapter = new RemoteMessageAdapter(this,options);
@@ -152,6 +168,62 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         }
     }
 
+    private void stopRemoteConversation(){
+        AlertDialog.Builder alert = new AlertDialog.Builder(RemoteConversation.this);
+        alert.setTitle("Stop Remote conversation");
+        alert.setMessage("Are you sure you want to stop this conversation?");
+        alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                saveRemoteConversation();
+                dialog.dismiss();
+            }
+        });
+        alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        alert.show();
+    }
+
+    private void saveRemoteConversation(){
+        final View view = LayoutInflater.from(this).inflate(R.layout.save_conversation_dialog, null);
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Save conversation");
+        alertDialog.setCancelable(false);
+
+        final EditText title = (EditText) view.findViewById(R.id.title);
+        final EditText details = (EditText) view.findViewById(R.id.details);
+
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                alertDialog.dismiss();
+            }
+        });
+
+
+        alertDialog.setView(view);
+        alertDialog.show();
+
+    }
+
+    @Override
+    public void onBackPressed(){
+        stopRemoteConversation();
+    }
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -219,7 +291,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
 
         RemoteUser remoteUser = new RemoteUser();
-        remoteUser.setUserId(getDeviceUniqueId(this));
+        remoteUser.setUserId(conversationId);
         remoteUser.setUserName("Test bb");
 
         RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(Calendar.getInstance().getTime()));

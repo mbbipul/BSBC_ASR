@@ -16,6 +16,9 @@ import com.example.bjit_asr.Models.RemoteUser;
 import com.example.bjit_asr.R;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
+
+import java.util.List;
+
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
 
 public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage, RecyclerView.ViewHolder> {
@@ -30,6 +33,8 @@ public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage,
         mContext = context;
         firebaseRecyclerOptions = options;
     }
+
+
 
     private int getUserType(RemoteUser remoteUser){
         if (getDeviceUniqueId(mContext).equals(remoteUser.getUserId())){

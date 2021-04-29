@@ -25,6 +25,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -87,7 +88,7 @@ import static com.example.bjit_asr.utils.Utils.unMuteDevice;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener,Function1<MeowBottomNavigation.Model, Unit> {
 
-    private TextView speechText;
+    private TextView remoteConCode;
     private SpeechRecognizer speechRecognizer;
     private RecognitionProgressView recognitionProgressView;
     private AudioManager audioManager;
@@ -106,7 +107,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private ImageView remoteConversationQrImage;
     private boolean isRecognizeListening;
     private AppDatabase db;
-    static final int PICK_IMAGE = 355;
+
+    String conversationId ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         MeowBottomNavigation bottomNavigation = findViewById(R.id.bottom);
-        speechText = findViewById(R.id.speech_text);
+        remoteConCode = findViewById(R.id.remote_conversation_code);
         speechContainer = findViewById(R.id.speech_container);
         remoteConversationContainer = findViewById(R.id.remote_conversation_container);
         listen = findViewById(R.id.listen);
@@ -165,7 +167,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             @Override
             public void onClick(View v) {
                 Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
-                startActivity(remoteConversation);
+                if(conversationId != null){
+                    remoteConversation.putExtra("conversationId",conversationId);
+                    startActivity(remoteConversation);
+                }else{
+                    showToast("Something wrong !");
+                }
 
             }
         });
@@ -173,24 +180,43 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         joinRemoteConversation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pickImage();
+                openRemoteJoinDialog();
             }
         });
     }
 
-    public void pickImage() {
-        Intent intent = new Intent(Intent.ACTION_PICK,
-                MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-        intent.putExtra("crop", "true");
-        intent.putExtra("scale", true);
-        intent.putExtra("outputX", 256);
-        intent.putExtra("outputY", 256);
-        intent.putExtra("aspectX", 1);
-        intent.putExtra("aspectY", 1);
-        intent.putExtra("return-data", true);
-        startActivityForResult(intent, PICK_IMAGE);
+    private void openRemoteJoinDialog(){
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+        alertDialog.setTitle("Join Remote Conversation");
+        alertDialog.setMessage("Enter Code");
+
+        final EditText input = new EditText(MainActivity.this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        input.setLayoutParams(lp);
+        alertDialog.setView(input);
+        alertDialog.setIcon(R.drawable.ic_baseline_leak_add_24);
+
+        alertDialog.setPositiveButton("YES",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(MainActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+
+        alertDialog.setNegativeButton("NO",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+        alertDialog.show();
+
     }
+
 
     private void openSaveConversation(){
         final View view = LayoutInflater.from(this).inflate(R.layout.save_conversation_dialog, null);
@@ -268,22 +294,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         super.onDestroy();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK) {
-            return;
-        }
-        if (requestCode == PICK_IMAGE) {
-            final Bundle extras = data.getExtras();
-            if (extras != null) {
-                //Get image
-                Bitmap newProfilePic = extras.getParcelable("data");
-                parseInfoFromBitmap(newProfilePic);
-            }
-        }
-
-    }
 
     public Result parseInfoFromBitmap(Bitmap bitmap) {
         int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
@@ -415,9 +425,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private Bitmap generateRemoteConSessionQr(){
-        String android_id = getDeviceUniqueId(this);
+        conversationId = getDeviceUniqueId(this)+String.valueOf(System.currentTimeMillis()).substring(8);
+        remoteConCode.setText(conversationId);
         // Initializing the QR Encoder with your value to be encoded, type you required and Dimension
-        QRGEncoder qrgEncoder = new QRGEncoder(android_id, null, QRGContents.Type.TEXT, 300);
+        QRGEncoder qrgEncoder = new QRGEncoder(conversationId, null, QRGContents.Type.TEXT, 300);
         qrgEncoder.setColorBlack(Color.BLACK);
         qrgEncoder.setColorWhite(Color.WHITE);
         return  qrgEncoder.getBitmap();
