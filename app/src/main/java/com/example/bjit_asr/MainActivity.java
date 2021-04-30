@@ -213,6 +213,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                             remoteConversation.putExtra("conversationRoomId",
                                     input.getText().toString());
 
+                            remoteConversation.putExtra("isFromJoin",
+                                    true);
+
                             getDbRef().child(input.getText().toString()).child(ROOM_STATUS_PATH)
                                     .child("status").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                                         @Override

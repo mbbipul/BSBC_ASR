@@ -67,6 +67,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     private AppDatabase db;
     String conversationRoomId;
     boolean isRemoteConversationOn;
+    boolean isFromJoin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +76,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
         Intent intent = getIntent();
         conversationRoomId = intent.getStringExtra("conversationRoomId");
+        isFromJoin = intent.getBooleanExtra("isFromJoin",false);
 
         db = AppDb.getInstance(this);
         isRemoteConversationOn = false;
@@ -138,7 +140,8 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
             }
         };
 
-        getDbRef().child(conversationRoomId).child(ROOM_STATUS_PATH)
+        if (isFromJoin)
+            getDbRef().child(conversationRoomId).child(ROOM_STATUS_PATH)
                 .child("status").addValueEventListener(roomStatusListener);
 
     }
@@ -270,7 +273,11 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
     @Override
     public void onBackPressed(){
-        stopRemoteConversation();
+        if (!isFromJoin){
+            stopRemoteConversation();
+            return;
+        }
+        finish();
     }
 
     @Override
@@ -358,8 +365,6 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     }
 
     private void showRecognizeText(String msg){
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-
         RemoteUser remoteUser = new RemoteUser();
         remoteUser.setUserId(getUserId(this));
         remoteUser.setUserName(getUserId(this));
