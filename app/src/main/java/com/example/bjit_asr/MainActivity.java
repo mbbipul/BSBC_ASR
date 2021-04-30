@@ -84,6 +84,7 @@ import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_C
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
 import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
 import static com.example.bjit_asr.utils.Utils.muteDevice;
+import static com.example.bjit_asr.utils.Utils.showSnackMessage;
 import static com.example.bjit_asr.utils.Utils.unMuteDevice;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener,Function1<MeowBottomNavigation.Model, Unit> {
@@ -168,13 +169,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             public void onClick(View v) {
                 Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
                 if(conversationId != null){
-                    remoteConversation.putExtra("conversationId",conversationId);
+                    remoteConversation.putExtra("conversationId",getDeviceUniqueId(MainActivity.this));
+                    remoteConversation.putExtra("conversationRef",conversationId);
                     remoteConversation.putExtra("isRemoteConversationCreate",true);
                     startActivity(remoteConversation);
                 }else{
                     showToast("Something wrong !");
                 }
-
             }
         });
 
@@ -202,8 +203,16 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         alertDialog.setPositiveButton("YES",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(MainActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
-
+                        Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
+                        showToast(input.getText().toString());
+                        if(input.getText() != null){
+                            remoteConversation.putExtra("conversationId",getDeviceUniqueId(MainActivity.this));
+                            remoteConversation.putExtra("conversationRef",input.getText().toString());
+                            remoteConversation.putExtra("isRemoteConversationCreate",false);
+                            startActivity(remoteConversation);
+                        }else{
+                            showToast("Something wrong !");
+                        }
                     }
                 });
 

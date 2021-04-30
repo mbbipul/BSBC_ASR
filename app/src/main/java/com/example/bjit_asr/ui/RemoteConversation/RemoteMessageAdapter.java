@@ -27,14 +27,14 @@ public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage,
 
     private Context mContext;
     FirebaseRecyclerOptions firebaseRecyclerOptions ;
+    private boolean isCreator;
 
-    public RemoteMessageAdapter(Context context, @NonNull FirebaseRecyclerOptions options) {
+    public RemoteMessageAdapter(Context context, @NonNull FirebaseRecyclerOptions options,boolean _isCreator) {
         super(options);
-        mContext = context;
-        firebaseRecyclerOptions = options;
+        this.mContext = context;
+        this.firebaseRecyclerOptions = options;
+        this.isCreator = _isCreator;
     }
-
-
 
 
     @Override

@@ -63,6 +63,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     private AppDatabase db;
     boolean isRemoteConversationCreate;
     String conversationRef;
+    boolean isRemoteConversationOn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,11 +73,10 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         Intent intent = getIntent();
         conversationId = intent.getStringExtra("conversationId");
         conversationRef = intent.getStringExtra("conversationRef");
-        conversationRef = (conversationId+String.valueOf(System.currentTimeMillis()).substring(8));
-
         isRemoteConversationCreate = intent.getBooleanExtra("isRemoteConversationCreate",false);
 
         db = AppDb.getInstance(this);
+        isRemoteConversationOn = false;
 
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
         isRecognizeListening = false;
@@ -106,7 +106,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
                         .setQuery(getDbRef().child(conversationRef), RemoteMessage.class)
                         .build();
 
-        remoteMessageAdapter = new RemoteMessageAdapter(this,options);
+        remoteMessageAdapter = new RemoteMessageAdapter(this,options,isRemoteConversationCreate);
 
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setStackFromEnd(true);
@@ -335,6 +335,11 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
         RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(Calendar.getInstance().getTime()),isRemoteConversationCreate);
 
+//        if (!isRemoteConversationOn){
+//            getDbRef().child(conversationRef).child("status").setValue(true);
+//            isRemoteConversationOn = true;
+//        }
+//
         getDbRef().child(conversationRef).push().setValue(remoteMessage).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {

@@ -13,4 +13,6 @@ public class FirebaseUtils {
     public static DatabaseReference getDbRef() {
         return getFirebaseDB().getReference().child(DATABASE_ROOT_PATH);
     }
+
+
 }
