@@ -14,6 +14,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -24,6 +26,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.bjit_asr.Models.Conversation;
+import com.example.bjit_asr.Models.ConversationRoom;
 import com.example.bjit_asr.Models.RemoteMessage;
 import com.example.bjit_asr.Models.RemoteUser;
 import com.example.bjit_asr.database.AppDatabase;
@@ -33,15 +36,21 @@ import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import static com.example.bjit_asr.utils.FirebaseUtils.MESSAGES_PATH;
+import static com.example.bjit_asr.utils.FirebaseUtils.ROOM_STATUS_PATH;
 import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
 import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
 import static com.example.bjit_asr.utils.Utils.getUserId;
 import static com.example.bjit_asr.utils.Utils.muteDevice;
+import static com.example.bjit_asr.utils.Utils.showSnackMessage;
 import static com.example.bjit_asr.utils.Utils.unMuteDevice;
 
 public class RemoteConversation extends AppCompatActivity implements RecognitionListener {
@@ -95,7 +104,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
         FirebaseRecyclerOptions<RemoteMessage> options =
                 new FirebaseRecyclerOptions.Builder<RemoteMessage>()
-                        .setQuery(getDbRef().child(conversationRoomId), RemoteMessage.class)
+                        .setQuery(getDbRef().child(conversationRoomId).child(MESSAGES_PATH), RemoteMessage.class)
                         .build();
 
         remoteMessageAdapter = new RemoteMessageAdapter(this,options);
@@ -105,6 +114,32 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         remoteConversationRecyclerView.setLayoutManager(mLinearLayoutManager);
         remoteConversationRecyclerView.setAdapter(remoteMessageAdapter);
 
+        ValueEventListener roomStatusListener= new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean status = (boolean) dataSnapshot.getValue();
+                if (!status){
+                    showSnackMessage(RemoteConversation.this,
+                            "This remote conversation room is no longer available");
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            finish();
+                        }
+                    }, 2000);
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Getting Post failed, log a message
+                Log.w("ROOM_STATUS", "loadRoomStatus:onCancelled", databaseError.toException());
+            }
+        };
+
+        getDbRef().child(conversationRoomId).child(ROOM_STATUS_PATH)
+                .child("status").addValueEventListener(roomStatusListener);
 
     }
 
@@ -191,13 +226,14 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     private void saveRemoteConversation(){
         final View view = LayoutInflater.from(this).inflate(R.layout.save_conversation_dialog, null);
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.setTitle("Save conversation");
+        alertDialog.setTitle("Do you want to save this conversation?");
+        alertDialog.setMessage("Please fill up these filed");
         alertDialog.setCancelable(false);
 
         final EditText title = (EditText) view.findViewById(R.id.title);
         final EditText details = (EditText) view.findViewById(R.id.details);
 
-        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Save", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Conversation conversation = new Conversation();
@@ -211,15 +247,17 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
                 showToast("Successfully save conversation !");
                 alertDialog.dismiss();
+                getDbRef().child(conversationRoomId).child(ROOM_STATUS_PATH).child("status").setValue(false);
                 RemoteConversation.this.finish();
             }
         });
 
 
-        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Don't save", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 alertDialog.dismiss();
+                getDbRef().child(conversationRoomId).child(ROOM_STATUS_PATH).child("status").setValue(false);
                 RemoteConversation.this.finish();
             }
         });
@@ -318,6 +356,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     private void showToast(String msg){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
+
     private void showRecognizeText(String msg){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
 
@@ -325,17 +364,20 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         remoteUser.setUserId(getUserId(this));
         remoteUser.setUserName(getUserId(this));
 
-        RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(Calendar.getInstance().getTime()));
+        RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(
+                Calendar.getInstance().getTime()));
 
-//        if (!isRemoteConversationOn){
-//            getDbRef().child(conversationRef).child("status").setValue(true);
-//            isRemoteConversationOn = true;
-//        }
-//
-        getDbRef().child(conversationRoomId).push().setValue(remoteMessage).addOnSuccessListener(new OnSuccessListener<Void>() {
+        if (!isRemoteConversationOn){
+            ConversationRoom conversationRoom = new ConversationRoom(remoteUser,
+                    String.valueOf(Calendar.getInstance().getTime()),true);
+            getDbRef().child(conversationRoomId).child(ROOM_STATUS_PATH).setValue(conversationRoom);
+            isRemoteConversationOn = true;
+        }
+
+        getDbRef().child(conversationRoomId).child(MESSAGES_PATH).push().setValue(remoteMessage).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Toast.makeText(RemoteConversation.this, "added", Toast.LENGTH_SHORT).show();
+                Log.v("MESSAGE_ADD","added");
             }
         });
 

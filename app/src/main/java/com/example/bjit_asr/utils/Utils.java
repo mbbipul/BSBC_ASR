@@ -1,5 +1,6 @@
 package com.example.bjit_asr.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.provider.Settings;
@@ -17,7 +18,9 @@ public class Utils {
     public static final int VIEW_TYPE_MESSAGE_RECEIVED = 2;
     private static final String USER_ID_KEY = "Remote_User_id";
 
-    public static void showSnackMessage(View layout,String message){
+    public static void showSnackMessage(Context context,String message){
+        View layout = ((Activity) context).getWindow()
+                .getDecorView().findViewById(android.R.id.content);
         Snackbar.make(layout, message, Snackbar.LENGTH_LONG)
                 .setAction("CLOSE", new View.OnClickListener() {
                     @Override

@@ -28,6 +28,7 @@ import java.util.List;
 
 import io.reactivex.functions.Consumer;
 
+import static com.example.bjit_asr.utils.FirebaseUtils.MESSAGES_PATH;
 import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
 
 public class ConversationsActivity extends AppCompatActivity {
@@ -54,7 +55,6 @@ public class ConversationsActivity extends AppCompatActivity {
 
         if (isConversationRemote){
             setTitle(conversationTitle+" - "+"Remote Conversation");
-            Toast.makeText(this, String.valueOf(remoteConversationId), Toast.LENGTH_SHORT).show();
 
             recognizeTextRecyclerView.setVisibility(View.GONE);
             RecyclerView remoteRecyclerView = findViewById(R.id.remote_conversations);
@@ -62,7 +62,7 @@ public class ConversationsActivity extends AppCompatActivity {
 
             FirebaseRecyclerOptions<RemoteMessage> options =
                     new FirebaseRecyclerOptions.Builder<RemoteMessage>()
-                            .setQuery(getDbRef().child(remoteConversationId), RemoteMessage.class)
+                            .setQuery(getDbRef().child(remoteConversationId).child(MESSAGES_PATH), RemoteMessage.class)
                             .build();
 
             remoteMessageAdapter = new RemoteMessageAdapter(this,options);
@@ -83,7 +83,7 @@ public class ConversationsActivity extends AppCompatActivity {
                             }
                         });
             }else {
-                Utils.showSnackMessage(recognizeTextRecyclerView,"Invalid conversation ID");
+                Utils.showSnackMessage(this,"Invalid conversation ID");
             }
         }
 

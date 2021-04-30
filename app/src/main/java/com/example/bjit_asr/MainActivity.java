@@ -40,8 +40,11 @@ import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
 import com.example.bjit_asr.utils.Utils;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.database.DataSnapshot;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.ChecksumException;
 import com.google.zxing.FormatException;
@@ -80,6 +83,8 @@ import io.reactivex.functions.Consumer;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
+import static com.example.bjit_asr.utils.FirebaseUtils.ROOM_STATUS_PATH;
+import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
 import static com.example.bjit_asr.utils.Utils.generateRemoteConversationRoomId;
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
@@ -202,11 +207,32 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         alertDialog.setPositiveButton("YES",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
-                        showToast(input.getText().toString());
+                        Intent remoteConversation = new Intent(MainActivity.this,
+                                RemoteConversation.class);
                         if(input.getText() != null){
-                            remoteConversation.putExtra("conversationRoomId",input.getText().toString());
-                            startActivity(remoteConversation);
+                            remoteConversation.putExtra("conversationRoomId",
+                                    input.getText().toString());
+
+                            getDbRef().child(input.getText().toString()).child(ROOM_STATUS_PATH)
+                                    .child("status").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<DataSnapshot> task) {
+                                            if (!task.isSuccessful()) {
+                                                Log.e("firebase", "Error getting data", task.getException());
+                                            }
+                                            else {
+                                                boolean status = (boolean) task.getResult().getValue();
+                                                if (status){
+                                                    startActivity(remoteConversation);
+                                                }else {
+                                                    showSnackMessage(MainActivity.this,
+                                                            "This remote conversation room is no longer available");
+                                                }
+                                                Log.d("firebase", String.valueOf(task.getResult().getValue()));
+                                            }
+                                        }
+                                    });
+
                         }else{
                             showToast("Something wrong !");
                         }
