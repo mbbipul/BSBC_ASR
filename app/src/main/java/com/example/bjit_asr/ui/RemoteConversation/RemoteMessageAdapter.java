@@ -36,25 +36,15 @@ public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage,
 
 
 
-    private int getUserType(RemoteUser remoteUser){
-        if (getDeviceUniqueId(mContext).equals(remoteUser.getUserId())){
-            Log.v("SENT_IDS",getDeviceUniqueId(mContext)+" ,"+remoteUser.getUserId());
-            return VIEW_TYPE_MESSAGE_SENT;
-        }
-        Log.v("REC_IDS",getDeviceUniqueId(mContext)+" ,"+remoteUser.getUserId());
-        return VIEW_TYPE_MESSAGE_RECEIVED;
-    }
 
     @Override
     public int getItemViewType(int position) {
         RemoteMessage remoteMessage = getItem(position);
-        switch (getUserType(remoteMessage.getSender())) {
-            case VIEW_TYPE_MESSAGE_SENT:
-                return VIEW_TYPE_MESSAGE_SENT;
-            case VIEW_TYPE_MESSAGE_RECEIVED:
-                return VIEW_TYPE_MESSAGE_RECEIVED;
-        }
-        return super.getItemViewType(position);
+        if (remoteMessage.getIsSender())
+            return VIEW_TYPE_MESSAGE_SENT;
+        else
+            return VIEW_TYPE_MESSAGE_RECEIVED;
+
     }
 
     // Inflates the appropriate layout according to the ViewType.

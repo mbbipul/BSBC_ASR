@@ -17,5 +17,12 @@ public class Conversation {
 
     @ColumnInfo(name = "details")
     public String details;
+
+    @ColumnInfo(name = "is_remote_conversation")
+    public boolean isConversationRemote;
+
+    @ColumnInfo(name = "remote_conversation_id")
+    public String remoteConversationId;
+
     public Conversation(){}
 }

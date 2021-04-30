@@ -9,9 +9,8 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/remote_conversations"
-        android:layout_width="match_parent"
-        android:layout_height="586dp"
-        android:layout_gravity="top"
+        android:layout_width="416dp"
+        android:layout_height="649dp"
         android:visibility="visible"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toTopOf="@+id/recognition_view"

@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
                 if(conversationId != null){
                     remoteConversation.putExtra("conversationId",conversationId);
+                    remoteConversation.putExtra("isRemoteConversationCreate",true);
                     startActivity(remoteConversation);
                 }else{
                     showToast("Something wrong !");
@@ -217,7 +218,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     }
 
-
     private void openSaveConversation(){
         final View view = LayoutInflater.from(this).inflate(R.layout.save_conversation_dialog, null);
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
@@ -232,6 +232,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             public void onClick(DialogInterface dialog, int which) {
                 Conversation conversation = new Conversation();
                 conversation.title = title.getText().toString();
+                conversation.isConversationRemote = false;
                 if (conversation.title != "" || conversation.title != " "){
                     conversation.details = details.getText().toString();
                     conversation.saveAt = String.valueOf(Calendar.getInstance().getTime());
@@ -484,11 +485,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     public void onError(int i) {
         switch (i){
             case SpeechRecognizer.ERROR_NO_MATCH:
-                showToast("No Match");
                 startRecognition();
                 break;
             case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                showToast("Time out");
+                Log.v("hh","kj");
                 startRecognition();
                 break;
         }

@@ -54,6 +54,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
                     Intent intent = new Intent(view.getContext(), ConversationsActivity.class);
                     intent.putExtra("conversationId",conversation.conversationId);
                     intent.putExtra("conversationTitle",conversation.title);
+                    intent.putExtra("isConversationRemote",conversation.isConversationRemote);
+                    if (conversation.isConversationRemote)
+                        intent.putExtra("remoteConversationId",conversation.remoteConversationId);
                     view.getContext().startActivity(intent);
                 }
             });
