@@ -65,7 +65,7 @@ public class ConversationsActivity extends AppCompatActivity {
                             .setQuery(getDbRef().child(remoteConversationId), RemoteMessage.class)
                             .build();
 
-            remoteMessageAdapter = new RemoteMessageAdapter(this,options,true);
+            remoteMessageAdapter = new RemoteMessageAdapter(this,options);
 
             LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
             mLinearLayoutManager.setStackFromEnd(true);

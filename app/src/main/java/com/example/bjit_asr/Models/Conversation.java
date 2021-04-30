@@ -22,7 +22,7 @@ public class Conversation {
     public boolean isConversationRemote;
 
     @ColumnInfo(name = "remote_conversation_id")
-    public String remoteConversationId;
+    public String remoteConversationRoomId;
 
     public Conversation(){}
 }

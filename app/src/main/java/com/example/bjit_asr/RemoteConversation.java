@@ -21,11 +21,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.bjit_asr.Models.Conversation;
-import com.example.bjit_asr.Models.RecognizeText;
 import com.example.bjit_asr.Models.RemoteMessage;
 import com.example.bjit_asr.Models.RemoteUser;
 import com.example.bjit_asr.database.AppDatabase;
@@ -38,14 +36,12 @@ import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
-import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
 import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
+import static com.example.bjit_asr.utils.Utils.getUserId;
 import static com.example.bjit_asr.utils.Utils.muteDevice;
-import static com.example.bjit_asr.utils.Utils.showSnackMessage;
 import static com.example.bjit_asr.utils.Utils.unMuteDevice;
 
 public class RemoteConversation extends AppCompatActivity implements RecognitionListener {
@@ -59,10 +55,8 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     RecyclerView remoteConversationRecyclerView;
     RemoteMessageAdapter remoteMessageAdapter;
 
-    String conversationId;
     private AppDatabase db;
-    boolean isRemoteConversationCreate;
-    String conversationRef;
+    String conversationRoomId;
     boolean isRemoteConversationOn;
 
     @Override
@@ -71,9 +65,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         setContentView(R.layout.activity_remote_conversation);
 
         Intent intent = getIntent();
-        conversationId = intent.getStringExtra("conversationId");
-        conversationRef = intent.getStringExtra("conversationRef");
-        isRemoteConversationCreate = intent.getBooleanExtra("isRemoteConversationCreate",false);
+        conversationRoomId = intent.getStringExtra("conversationRoomId");
 
         db = AppDb.getInstance(this);
         isRemoteConversationOn = false;
@@ -103,10 +95,10 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
 
         FirebaseRecyclerOptions<RemoteMessage> options =
                 new FirebaseRecyclerOptions.Builder<RemoteMessage>()
-                        .setQuery(getDbRef().child(conversationRef), RemoteMessage.class)
+                        .setQuery(getDbRef().child(conversationRoomId), RemoteMessage.class)
                         .build();
 
-        remoteMessageAdapter = new RemoteMessageAdapter(this,options,isRemoteConversationCreate);
+        remoteMessageAdapter = new RemoteMessageAdapter(this,options);
 
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setStackFromEnd(true);
@@ -214,7 +206,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
                 conversation.details = details.getText().toString();
                 conversation.saveAt = String.valueOf(Calendar.getInstance().getTime());
                 conversation.isConversationRemote = true;
-                conversation.remoteConversationId = conversationRef;
+                conversation.remoteConversationRoomId = conversationRoomId;
                 db.conversationDao().insertOne(conversation);
 
                 showToast("Successfully save conversation !");
@@ -330,17 +322,17 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
 
         RemoteUser remoteUser = new RemoteUser();
-        remoteUser.setUserId(conversationId);
-        remoteUser.setUserName(conversationId);
+        remoteUser.setUserId(getUserId(this));
+        remoteUser.setUserName(getUserId(this));
 
-        RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(Calendar.getInstance().getTime()),isRemoteConversationCreate);
+        RemoteMessage remoteMessage = new RemoteMessage(msg,remoteUser,String.valueOf(Calendar.getInstance().getTime()));
 
 //        if (!isRemoteConversationOn){
 //            getDbRef().child(conversationRef).child("status").setValue(true);
 //            isRemoteConversationOn = true;
 //        }
 //
-        getDbRef().child(conversationRef).push().setValue(remoteMessage).addOnSuccessListener(new OnSuccessListener<Void>() {
+        getDbRef().child(conversationRoomId).push().setValue(remoteMessage).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 Toast.makeText(RemoteConversation.this, "added", Toast.LENGTH_SHORT).show();

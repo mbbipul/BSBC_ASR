@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bjit_asr.ConversationsActivity;
 import com.example.bjit_asr.Models.Conversation;
-import com.example.bjit_asr.Models.RecognizeText;
 import com.example.bjit_asr.R;
 import com.google.android.material.button.MaterialButton;
 
@@ -56,7 +55,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
                     intent.putExtra("conversationTitle",conversation.title);
                     intent.putExtra("isConversationRemote",conversation.isConversationRemote);
                     if (conversation.isConversationRemote)
-                        intent.putExtra("remoteConversationId",conversation.remoteConversationId);
+                        intent.putExtra("remoteConversationId",conversation.remoteConversationRoomId);
                     view.getContext().startActivity(intent);
                 }
             });

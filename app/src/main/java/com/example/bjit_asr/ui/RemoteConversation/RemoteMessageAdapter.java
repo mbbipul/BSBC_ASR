@@ -20,6 +20,7 @@ import com.firebase.ui.database.FirebaseRecyclerOptions;
 import java.util.List;
 
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
+import static com.example.bjit_asr.utils.Utils.getUserId;
 
 public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage, RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_MESSAGE_SENT = 1;
@@ -27,20 +28,18 @@ public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage,
 
     private Context mContext;
     FirebaseRecyclerOptions firebaseRecyclerOptions ;
-    private boolean isCreator;
 
-    public RemoteMessageAdapter(Context context, @NonNull FirebaseRecyclerOptions options,boolean _isCreator) {
+    public RemoteMessageAdapter(Context context, @NonNull FirebaseRecyclerOptions options) {
         super(options);
         this.mContext = context;
         this.firebaseRecyclerOptions = options;
-        this.isCreator = _isCreator;
     }
 
 
     @Override
     public int getItemViewType(int position) {
         RemoteMessage remoteMessage = getItem(position);
-        if (remoteMessage.getIsSender())
+        if (remoteMessage.getSender().getUserId().equals(getUserId(mContext)))
             return VIEW_TYPE_MESSAGE_SENT;
         else
             return VIEW_TYPE_MESSAGE_RECEIVED;

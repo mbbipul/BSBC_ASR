@@ -81,6 +81,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
+import static com.example.bjit_asr.utils.Utils.generateRemoteConversationRoomId;
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
 import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
 import static com.example.bjit_asr.utils.Utils.muteDevice;
@@ -109,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private boolean isRecognizeListening;
     private AppDatabase db;
 
-    String conversationId ;
+    String conversationRoomId ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -168,10 +169,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             @Override
             public void onClick(View v) {
                 Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
-                if(conversationId != null){
-                    remoteConversation.putExtra("conversationId",getDeviceUniqueId(MainActivity.this));
-                    remoteConversation.putExtra("conversationRef",conversationId);
-                    remoteConversation.putExtra("isRemoteConversationCreate",true);
+                if(conversationRoomId != null){
+                    remoteConversation.putExtra("conversationRoomId",conversationRoomId);
                     startActivity(remoteConversation);
                 }else{
                     showToast("Something wrong !");
@@ -206,9 +205,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                         Intent remoteConversation = new Intent(MainActivity.this,RemoteConversation.class);
                         showToast(input.getText().toString());
                         if(input.getText() != null){
-                            remoteConversation.putExtra("conversationId",getDeviceUniqueId(MainActivity.this));
-                            remoteConversation.putExtra("conversationRef",input.getText().toString());
-                            remoteConversation.putExtra("isRemoteConversationCreate",false);
+                            remoteConversation.putExtra("conversationRoomId",input.getText().toString());
                             startActivity(remoteConversation);
                         }else{
                             showToast("Something wrong !");
@@ -435,10 +432,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private Bitmap generateRemoteConSessionQr(){
-        conversationId = getDeviceUniqueId(this)+String.valueOf(System.currentTimeMillis()).substring(8);
-        remoteConCode.setText(conversationId);
+        conversationRoomId = generateRemoteConversationRoomId(this);
+        remoteConCode.setText(conversationRoomId);
         // Initializing the QR Encoder with your value to be encoded, type you required and Dimension
-        QRGEncoder qrgEncoder = new QRGEncoder(conversationId, null, QRGContents.Type.TEXT, 300);
+        QRGEncoder qrgEncoder = new QRGEncoder(conversationRoomId, null, QRGContents.Type.TEXT, 300);
         qrgEncoder.setColorBlack(Color.BLACK);
         qrgEncoder.setColorWhite(Color.WHITE);
         return  qrgEncoder.getBitmap();

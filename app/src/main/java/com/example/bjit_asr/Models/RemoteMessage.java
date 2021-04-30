@@ -4,17 +4,15 @@ public class RemoteMessage {
     String message;
     RemoteUser sender;
     String createdAt;
-    boolean isSender;
 
     public String getMessage() {
         return message;
     }
 
-    public RemoteMessage(String message, RemoteUser sender, String createdAt,boolean isSender) {
+    public RemoteMessage(String message, RemoteUser sender, String createdAt) {
         this.message = message;
         this.sender = sender;
         this.createdAt = createdAt;
-        this.isSender = isSender;
     }
 
     public RemoteMessage(){}
@@ -37,14 +35,6 @@ public class RemoteMessage {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public boolean getIsSender() {
-        return isSender;
-    }
-
-    public void setIsSender(boolean sender) {
-        isSender = sender;
     }
 
 }

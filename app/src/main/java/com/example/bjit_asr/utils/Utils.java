@@ -10,10 +10,12 @@ import androidx.core.content.ContextCompat;
 import com.example.bjit_asr.R;
 import com.google.android.material.snackbar.Snackbar;
 
+
 public class Utils {
     public static final int REQUEST_RECORD_AUDIO_PERMISSION_CODE = 14334;
     public static final int VIEW_TYPE_MESSAGE_SENT = 1;
     public static final int VIEW_TYPE_MESSAGE_RECEIVED = 2;
+    private static final String USER_ID_KEY = "Remote_User_id";
 
     public static void showSnackMessage(View layout,String message){
         Snackbar.make(layout, message, Snackbar.LENGTH_LONG)
@@ -54,5 +56,16 @@ public class Utils {
                 Settings.Secure.ANDROID_ID);
     }
 
+    public static String getUserId(Context context){
+        Keystores keyStore = Keystores.getInstance(context);
+        String userId = keyStore.get(USER_ID_KEY);
+        if (userId == null)
+            keyStore.put(USER_ID_KEY,getDeviceUniqueId(context));
+        return keyStore.get(USER_ID_KEY);
+    }
+
+    public static String generateRemoteConversationRoomId(Context context){
+        return getUserId(context)+String.valueOf(System.currentTimeMillis()).substring(9);
+    }
 
 }
