@@ -12,14 +12,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bjit_asr.Models.RemoteMessage;
-import com.example.bjit_asr.Models.RemoteUser;
 import com.example.bjit_asr.R;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 
-import java.util.List;
-
-import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import static com.example.bjit_asr.utils.Utils.getUserId;
 
 public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage, RecyclerView.ViewHolder> {
@@ -80,25 +79,36 @@ public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage,
 
 
     private class SentMessageHolder extends RecyclerView.ViewHolder {
-        TextView messageText, timeText;
+        TextView messageText, timeText,dateText;
 
         SentMessageHolder(View itemView) {
             super(itemView);
 
             messageText = (TextView) itemView.findViewById(R.id.text_gchat_message_me);
             timeText = (TextView) itemView.findViewById(R.id.text_gchat_timestamp_me);
+            dateText = (TextView) itemView.findViewById(R.id.text_gchat_date_me);
         }
 
         void bind(RemoteMessage message) {
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy");
+            try {
+                Date date = formatter.parse(message.getCreatedAt());
+                String formatDate = new SimpleDateFormat("MM-dd-yyyy").format(date);
+                String formatTime = new SimpleDateFormat("HH:mm").format(date);
+
+                dateText.setText(formatDate);
+                timeText.setText(formatTime);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
             messageText.setText(message.getMessage());
 
-            // Format the stored timestamp into a readable String using method.
-            timeText.setText("");
         }
     }
 
     private class ReceivedMessageHolder extends RecyclerView.ViewHolder {
-        TextView messageText, timeText, nameText;
+        TextView messageText, timeText, nameText,dateText;
         ImageView profileImage;
 
         ReceivedMessageHolder(View itemView) {
@@ -106,17 +116,25 @@ public class RemoteMessageAdapter extends FirebaseRecyclerAdapter<RemoteMessage,
 
             messageText = (TextView) itemView.findViewById(R.id.text_gchat_message_other);
             timeText = (TextView) itemView.findViewById(R.id.text_gchat_timestamp_other);
+            dateText = (TextView) itemView.findViewById(R.id.text_gchat_date_other);
             nameText = (TextView) itemView.findViewById(R.id.text_gchat_user_other);
             profileImage = (ImageView) itemView.findViewById(R.id.image_gchat_profile_other);
         }
 
         void bind(RemoteMessage message) {
             messageText.setText(message.getMessage());
+            nameText.setText(message.getSender().getUserName());
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy");
+            try {
+                Date date = formatter.parse(message.getCreatedAt());
+                String formatDate = new SimpleDateFormat("MM-dd-yyyy").format(date);
+                String formatTime = new SimpleDateFormat("HH:mm").format(date);
 
-            // Format the stored timestamp into a readable String using method.
-            timeText.setText("");
-
-            // Insert the profile image from the URL into the ImageView.
+                dateText.setText(formatDate);
+                timeText.setText(formatTime);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
