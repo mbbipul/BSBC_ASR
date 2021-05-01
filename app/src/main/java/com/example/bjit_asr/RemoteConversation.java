@@ -90,7 +90,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         recognitionProgressView.setColors(getRecognitionProgressViewColor(this));
         recognitionProgressView.play();
 
-        setTitle("RC Room : "+conversationRoomId);
+        setTitle("Room : "+conversationRoomId);
 
         listen.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -224,12 +224,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                                                 Log.e("firebase", "Error getting data", task.getException());
                                             }
                                             else {
-                                                boolean status = (boolean) task.getResult().getValue();
-                                                if (status){
+                                                if (task.getResult().getValue() != null && (boolean) task.getResult().getValue()){
                                                     startActivity(remoteConversation);
                                                 }else {
                                                     showSnackMessage(MainActivity.this,
-                                                            "This remote conversation room is no longer available");
+                                                            "This remote conversation room is no longer available or invalid room id");
                                                 }
                                                 Log.d("firebase", String.valueOf(task.getResult().getValue()));
                                             }
