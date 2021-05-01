@@ -117,6 +117,21 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         remoteConversationRecyclerView.setLayoutManager(mLinearLayoutManager);
         remoteConversationRecyclerView.setAdapter(remoteMessageAdapter);
 
+        remoteMessageAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                super.onItemRangeInserted(positionStart, itemCount);
+                int friendlyMessageCount = remoteMessageAdapter.getItemCount();
+                int lastVisiblePosition =
+                        mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
+                if (lastVisiblePosition == -1 ||
+                        (positionStart >= (friendlyMessageCount - 1) &&
+                                lastVisiblePosition == (positionStart - 1))) {
+                    remoteConversationRecyclerView.scrollToPosition(positionStart);
+                }
+            }
+        });
+
         ValueEventListener roomStatusListener= new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
