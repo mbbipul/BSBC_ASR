@@ -32,6 +32,7 @@ import com.example.bjit_asr.Models.RemoteUser;
 import com.example.bjit_asr.database.AppDatabase;
 import com.example.bjit_asr.database.AppDb;
 import com.example.bjit_asr.ui.RemoteConversation.RemoteMessageAdapter;
+import com.example.bjit_asr.utils.Keystores;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -46,6 +47,7 @@ import java.util.Calendar;
 import static com.example.bjit_asr.utils.FirebaseUtils.MESSAGES_PATH;
 import static com.example.bjit_asr.utils.FirebaseUtils.ROOM_STATUS_PATH;
 import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
+import static com.example.bjit_asr.utils.Utils.RECOGNIZER_LANGUAGE_KEY;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
 import static com.example.bjit_asr.utils.Utils.getRecognitionProgressViewColor;
 import static com.example.bjit_asr.utils.Utils.getUserId;
@@ -68,12 +70,14 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
     String conversationRoomId;
     boolean isRemoteConversationOn;
     boolean isFromJoin;
+    Keystores keystores;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_remote_conversation);
 
+        keystores = Keystores.getInstance(this);
         Intent intent = getIntent();
         conversationRoomId = intent.getStringExtra("conversationRoomId");
         isFromJoin = intent.getBooleanExtra("isFromJoin",false);
@@ -204,7 +208,7 @@ public class RemoteConversation extends AppCompatActivity implements Recognition
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en");
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, keystores.get(RECOGNIZER_LANGUAGE_KEY));
 
         deviceSystemVolume = muteDevice(audioManager);
         speechRecognizer.startListening(intent);

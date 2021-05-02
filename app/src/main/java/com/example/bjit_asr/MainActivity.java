@@ -92,6 +92,7 @@ import kotlin.jvm.functions.Function1;
 
 import static com.example.bjit_asr.utils.FirebaseUtils.ROOM_STATUS_PATH;
 import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
+import static com.example.bjit_asr.utils.Utils.RECOGNIZER_LANGUAGE_KEY;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
 import static com.example.bjit_asr.utils.Utils.generateRemoteConversationRoomId;
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
@@ -124,7 +125,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     String conversationRoomId ;
     Keystores keystores ;
-    private static String RECOGNIZER_LANGUAGE_KEY = "REC_LANG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,6 +200,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 openRemoteJoinDialog();
             }
         });
+
+        if(keystores.get(RECOGNIZER_LANGUAGE_KEY)==null){
+            keystores.put(RECOGNIZER_LANGUAGE_KEY,"en");
+        }
 
     }
 
