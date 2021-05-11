@@ -9,9 +9,9 @@
     <application
         android:allowBackup="true"
         android:hardwareAccelerated="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_herupa"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_herupa"
         android:supportsRtl="true"
         android:theme="@style/Theme.BJIT_ASR">
         <activity android:name=".RemoteConversation" />
