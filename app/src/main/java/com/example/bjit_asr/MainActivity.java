@@ -322,7 +322,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
     private void fetchConversations(){
         conversationRecyclerView.setLayoutManager(new GridLayoutManager(this,2));
-        conversationAdapter = new ConversationAdapter(db.conversationDao().getAll());
+        List<Conversation> conversations = db.conversationDao().getAll();
+        if (conversations.size() == 0 )
+            showSnackMessage(this,"There is no save conversations !");
+        conversationAdapter = new ConversationAdapter(conversations);
         conversationRecyclerView.setAdapter(conversationAdapter);
     }
 
