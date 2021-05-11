@@ -7,7 +7,7 @@
     android:layout_height="match_parent">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:visibility="gone"
+        android:visibility="visible"
         android:id="@+id/all_conversations"
         android:layout_width="match_parent"
         android:layout_height="586dp"

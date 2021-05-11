@@ -1,6 +1,7 @@
 package com.example.bjit_asr;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -20,12 +21,15 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +41,9 @@ import com.example.bjit_asr.database.AppDatabase;
 import com.example.bjit_asr.database.AppDb;
 import com.example.bjit_asr.ui.Home.ConversationAdapter;
 import com.example.bjit_asr.ui.Home.RecognizeTextAdapter;
+import com.example.bjit_asr.utils.Keystores;
+import com.example.bjit_asr.utils.SpeechRecLangDetailsChecker;
+import com.example.bjit_asr.utils.SupportedSpeechLanguageListener;
 import com.example.bjit_asr.utils.Utils;
 import com.github.zagum.speechrecognitionview.RecognitionProgressView;
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter;
@@ -85,6 +92,7 @@ import kotlin.jvm.functions.Function1;
 
 import static com.example.bjit_asr.utils.FirebaseUtils.ROOM_STATUS_PATH;
 import static com.example.bjit_asr.utils.FirebaseUtils.getDbRef;
+import static com.example.bjit_asr.utils.Utils.RECOGNIZER_LANGUAGE_KEY;
 import static com.example.bjit_asr.utils.Utils.REQUEST_RECORD_AUDIO_PERMISSION_CODE;
 import static com.example.bjit_asr.utils.Utils.generateRemoteConversationRoomId;
 import static com.example.bjit_asr.utils.Utils.getDeviceUniqueId;
@@ -93,7 +101,7 @@ import static com.example.bjit_asr.utils.Utils.muteDevice;
 import static com.example.bjit_asr.utils.Utils.showSnackMessage;
 import static com.example.bjit_asr.utils.Utils.unMuteDevice;
 
-public class MainActivity extends AppCompatActivity implements RecognitionListener,Function1<MeowBottomNavigation.Model, Unit> {
+public class MainActivity extends AppCompatActivity implements RecognitionListener, Function1<MeowBottomNavigation.Model, Unit>, SupportedSpeechLanguageListener {
 
     private TextView remoteConCode;
     private SpeechRecognizer speechRecognizer;
@@ -116,6 +124,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private AppDatabase db;
 
     String conversationRoomId ;
+    Keystores keystores ;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
         isRecognizeListening = false;
         db = AppDb.getInstance(this);
+        keystores = Keystores.getInstance(MainActivity.this);
 
         audioManager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
@@ -189,8 +200,19 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 openRemoteJoinDialog();
             }
         });
+
+        if(keystores.get(RECOGNIZER_LANGUAGE_KEY)==null){
+            keystores.put(RECOGNIZER_LANGUAGE_KEY,"en");
+        }
+
     }
 
+    private void getSpeechRecognizerLanguagesDetails(){
+        Intent detailsIntent =  new Intent(RecognizerIntent.getVoiceDetailsIntent(this));
+        sendOrderedBroadcast(
+                detailsIntent, null, new SpeechRecLangDetailsChecker(this),
+                null, Activity.RESULT_OK, null, null);
+    }
     private void openRemoteJoinDialog(){
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
         alertDialog.setTitle("Join Remote Conversation");
@@ -372,6 +394,54 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.home_menu, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_choose_lang:
+                getSpeechRecognizerLanguagesDetails();
+                return true;
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
+    }
+
+    private void showLanguageChoosePopup(List recSupportedLanguages) {
+
+        final View parent = findViewById(R.id.action_choose_lang);
+        PopupMenu popupMenu = new PopupMenu(parent.getContext(), parent);
+        Menu menu = popupMenu.getMenu();
+        if (recSupportedLanguages == null){
+            menu.add(0, 0, Menu.NONE, "Detected No language");
+        }
+
+        for (int i = 0; i < recSupportedLanguages.size() ; i++){
+            menu.add(0, i, Menu.NONE, recSupportedLanguages.get(i).toString());
+        }
+
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                showToast("Speech recognizer language set to "+item.getTitle().toString());
+                keystores.put(RECOGNIZER_LANGUAGE_KEY,item.getTitle().toString());
+
+                return true;
+            }
+        });
+        popupMenu.show();
+    }
+
     private void callStartRecognition(){
         if(isRecognizeListening){
             speechRecognizer.destroy();
@@ -404,7 +474,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en");
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, keystores.get(RECOGNIZER_LANGUAGE_KEY));
 
         deviceSystemVolume = muteDevice(audioManager);
         speechRecognizer.startListening(intent);
@@ -546,5 +616,15 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private void showToast(String msg){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onLanguageBroadcastReceiveListener(List<String> supportedLanguages) {
+        showLanguageChoosePopup(supportedLanguages);
+    }
+
+    @Override
+    public void onNoLanguageDetected(String msg) {
+        showToast(msg);
     }
 }

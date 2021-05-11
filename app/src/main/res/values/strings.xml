@@ -3,4 +3,5 @@
     <string name="speak">Speak</string>
     <string name="speech_prompt">speech_prompt</string>
     <string name="speech_not_supported">Speech to text not supported</string>
+    <string name="action_choose_language">Set Recognizer Language</string>
 </resources>
